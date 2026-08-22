@@ -355,13 +355,13 @@ export default function App() {
     >
       {/* Top Navbar */}
       <header
-        className={`sticky top-0 z-40 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3 transition-colors duration-200 border-b ${
+        className={`sticky top-0 z-40 backdrop-blur-md px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 transition-colors duration-200 border-b ${
           isDark
             ? "bg-[#0c1219]/95 border-slate-800/80 text-slate-100"
             : "bg-white/95 border-slate-200/90 text-slate-900 shadow-sm"
         }`}
       >
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="w-full max-w-[1680px] 2xl:max-w-[1840px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           {/* Left: Brand & Live Indicator */}
           <div className="flex items-center justify-between w-full md:w-auto gap-3">
             <div className="flex items-center gap-2.5">
@@ -615,7 +615,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+      <main className="flex-1 w-full max-w-[1680px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 space-y-6">
         {/* Empty / Loading State Notice if no data has been parsed */}
         {sheetData.rows.length === 0 && !isLoading && (
           <div

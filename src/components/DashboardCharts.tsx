@@ -448,7 +448,7 @@ export const DashboardCharts: React.FC<Props> = ({ sheetData, filteredRows }) =>
         </div>
 
         {/* Chart Container */}
-        <div className="h-[280px] w-full pt-3">
+        <div className="h-[290px] sm:h-[320px] 2xl:h-[360px] w-full pt-3">
           {trendData.length === 0 ? (
             <div
               className={`h-full flex items-center justify-center text-xs ${
@@ -696,7 +696,7 @@ export const DashboardCharts: React.FC<Props> = ({ sheetData, filteredRows }) =>
         </div>
 
         {/* Recharts Pie */}
-        <div className="h-[280px] w-full flex items-center justify-center pt-2">
+        <div className="h-[290px] sm:h-[320px] 2xl:h-[360px] w-full flex items-center justify-center pt-2">
           {servicePieData.length === 0 ? (
             <div
               className={`text-xs ${
@@ -712,8 +712,8 @@ export const DashboardCharts: React.FC<Props> = ({ sheetData, filteredRows }) =>
                   data={servicePieData}
                   cx="50%"
                   cy="46%"
-                  innerRadius={55}
-                  outerRadius={85}
+                  innerRadius={60}
+                  outerRadius={95}
                   paddingAngle={3}
                   dataKey="value"
                   nameKey="name"
