@@ -1,0 +1,6 @@
+{
+  "name": "Dashboard PH Banjarnegara",
+  "description": "Dashboard analitik pengiriman & data operasional PH Banjarnegara.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
