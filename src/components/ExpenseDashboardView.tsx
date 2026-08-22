@@ -22,6 +22,7 @@ import {
   Sparkles,
   MapPin,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -166,7 +167,12 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
   const isUsingSampleFallback = !expenseSheetData || expenseSheetData.rows.length === 0;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="space-y-6"
+    >
       {/* 1. Header Card */}
       <div
         className={`border rounded-2xl p-4 sm:p-6 shadow-sm transition-colors ${
@@ -177,15 +183,16 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner transition-transform ${
                 isDark
                   ? "bg-rose-500/10 border border-rose-500/30 text-rose-400"
                   : "bg-rose-50 border border-rose-200 text-rose-600"
               }`}
             >
               <Receipt className="w-6 h-6" />
-            </div>
+            </motion.div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">
@@ -234,7 +241,8 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                   : "bg-slate-100 border-slate-200"
               }`}
             >
-              <button
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 onClick={() => setChartType("bar")}
                 className={`px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1.5 ${
                   chartType === "bar"
@@ -248,8 +256,9 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
               >
                 <BarChart3 className="w-3.5 h-3.5" />
                 <span>Batang</span>
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 onClick={() => setChartType("area")}
                 className={`px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1.5 ${
                   chartType === "area"
@@ -263,11 +272,13 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
               >
                 <Activity className="w-3.5 h-3.5" />
                 <span>Area</span>
-              </button>
+              </motion.button>
             </div>
 
             {/* Refresh Sheet EXPENSE */}
-            <button
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              whileHover={{ scale: 1.02 }}
               onClick={onRefreshExpenseSheet}
               disabled={isLoading}
               className={`p-2 rounded-xl border text-xs transition flex items-center justify-center gap-1.5 font-medium ${
@@ -283,7 +294,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                 }`}
               />
               <span className="hidden sm:inline">Refresh Data</span>
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -305,13 +316,29 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
       </div>
 
       {/* 2. Top Summary Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.06 },
+          },
+        }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3.5"
+      >
         {/* Total Expense */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 flex flex-col justify-between shadow-sm transition-colors ${
             isDark
-              ? "bg-[#0b1118] border-slate-800/90"
-              : "bg-white border-slate-200"
+              ? "bg-[#0b1118] border-slate-800/90 hover:border-rose-500/40"
+              : "bg-white border-slate-200 hover:border-rose-300"
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-2">
@@ -344,14 +371,19 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
               <span>{expenseStats.totalTransactions} transaksi tercatat</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Avg Expense / Day */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 flex flex-col justify-between shadow-sm transition-colors ${
             isDark
-              ? "bg-[#0b1118] border-slate-800/90"
-              : "bg-white border-slate-200"
+              ? "bg-[#0b1118] border-slate-800/90 hover:border-amber-500/40"
+              : "bg-white border-slate-200 hover:border-amber-300"
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-2">
@@ -384,14 +416,19 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
               <span>{expenseStats.activeDaysCount} hari pengeluaran aktif</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Avg / Transaction */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 flex flex-col justify-between shadow-sm transition-colors ${
             isDark
-              ? "bg-[#0b1118] border-slate-800/90"
-              : "bg-white border-slate-200"
+              ? "bg-[#0b1118] border-slate-800/90 hover:border-indigo-500/40"
+              : "bg-white border-slate-200 hover:border-indigo-300"
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-2">
@@ -424,14 +461,19 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
               <span>{expenseStats.categoryBreakdown.length} kategori biaya</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Peak Expense */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 flex flex-col justify-between shadow-sm transition-colors ${
             isDark
-              ? "bg-[#0b1118] border-slate-800/90"
-              : "bg-white border-slate-200"
+              ? "bg-[#0b1118] border-slate-800/90 hover:border-rose-500/40"
+              : "bg-white border-slate-200 hover:border-rose-300"
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-2">
@@ -468,8 +510,8 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                 : "-"}
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* 3. Analytics Chart & Category Breakdown Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1036,6 +1078,6 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

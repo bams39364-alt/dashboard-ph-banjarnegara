@@ -170,6 +170,27 @@ export function findCustomerTypeColumn(headers: string[]): string | undefined {
 }
 
 /**
+ * Find Sender Name column (specifically sender_name, sender, pengirim, shipper, etc.)
+ */
+export function findSenderColumn(headers: string[]): string | undefined {
+  return (
+    findColumn(
+      headers,
+      /^(sender_name|sendername|nama_pengirim|namapengirim|pengirim|sender|shipper_name|shippername|nama_shipper|shipper|merchant_name|merchant|client_name|client|customer_name|nama_customer|nama_pelanggan|seller_name|seller|toko)$/i
+    ) ||
+    headers.find((h) =>
+      /sender_name|nama_pengirim|sender|pengirim|shipper_name|shipper|merchant_name|merchant/i.test(
+        h.trim()
+      )
+    ) ||
+    findColumn(
+      headers,
+      /^(customer|pelanggan|client|seller|toko|store)$/i
+    )
+  );
+}
+
+/**
  * Find Service / Layanan column
  */
 export function findServiceColumn(headers: string[]): string | undefined {

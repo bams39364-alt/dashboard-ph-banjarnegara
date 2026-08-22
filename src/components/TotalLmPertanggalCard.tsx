@@ -8,6 +8,7 @@ import {
   Activity,
   CalendarDays,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -53,7 +54,10 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
   }, [lmSheetData, mainSheetData, filters]);
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
       className={`border rounded-2xl p-4 sm:p-6 shadow-sm space-y-6 transition-colors ${
         isDark ? "bg-[#0b1118] border-slate-800/90" : "bg-white border-slate-200"
       }`}
@@ -65,15 +69,16 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
         }`}
       >
         <div className="flex items-center gap-3.5">
-          <div
-            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner transition-transform ${
               isDark
                 ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
                 : "bg-emerald-50 border border-emerald-200 text-emerald-600"
             }`}
           >
             <Truck className="w-6 h-6" />
-          </div>
+          </motion.div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold tracking-tight">
               TOTAL LM PERTANGGAL
@@ -98,7 +103,8 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
                 : "bg-slate-100 border-slate-200"
             }`}
           >
-            <button
+            <motion.button
+              whileTap={{ scale: 0.92 }}
               onClick={() => setChartType("bar")}
               className={`px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1.5 ${
                 chartType === "bar"
@@ -112,8 +118,9 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
             >
               <BarChart3 className="w-3.5 h-3.5" />
               <span>Batang</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
               onClick={() => setChartType("area")}
               className={`px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1.5 ${
                 chartType === "area"
@@ -127,11 +134,13 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
             >
               <Activity className="w-3.5 h-3.5" />
               <span>Area</span>
-            </button>
+            </motion.button>
           </div>
 
           {/* Refresh Sheet LM */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            whileHover={{ scale: 1.02 }}
             onClick={onRefreshLmSheet}
             disabled={isLoading}
             className={`p-2 rounded-xl border text-xs transition flex items-center justify-center gap-1.5 font-medium disabled:opacity-50 ${
@@ -143,19 +152,35 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
             <span className="hidden sm:inline">Refresh Data</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* 2. Top Summary Stat Cards */}
       {lmStats ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: { staggerChildren: 0.06 },
+            },
+          }}
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+        >
           {/* Total LM Count */}
-          <div
-            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between ${
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              show: { opacity: 1, y: 0 },
+            }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-shadow ${
               isDark
-                ? "bg-slate-900/80 border-slate-800"
-                : "bg-slate-50 border-slate-200"
+                ? "bg-slate-900/80 border-slate-800 hover:border-emerald-500/40 hover:shadow-md"
+                : "bg-slate-50 border-slate-200 hover:border-emerald-300 hover:shadow-md"
             }`}
           >
             <div
@@ -180,14 +205,19 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
                 {lmStats.totalRecords.toLocaleString("id-ID")} data
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Rata-Rata Data / Hari */}
-          <div
-            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between ${
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              show: { opacity: 1, y: 0 },
+            }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-shadow ${
               isDark
-                ? "bg-slate-900/80 border-slate-800"
-                : "bg-slate-50 border-slate-200"
+                ? "bg-slate-900/80 border-slate-800 hover:border-cyan-500/40 hover:shadow-md"
+                : "bg-slate-50 border-slate-200 hover:border-cyan-300 hover:shadow-md"
             }`}
           >
             <div
@@ -216,14 +246,19 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
                 Per hari aktif
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Puncak Data Tertinggi */}
-          <div
-            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between ${
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              show: { opacity: 1, y: 0 },
+            }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-shadow ${
               isDark
-                ? "bg-slate-900/80 border-slate-800"
-                : "bg-slate-50 border-slate-200"
+                ? "bg-slate-900/80 border-slate-800 hover:border-amber-500/40 hover:shadow-md"
+                : "bg-slate-50 border-slate-200 hover:border-amber-300 hover:shadow-md"
             }`}
           >
             <div
@@ -251,14 +286,19 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
                 {lmStats.peakDay ? lmStats.peakDay.formattedDate : "-"}
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Hari Aktif Pengiriman */}
-          <div
-            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between ${
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              show: { opacity: 1, y: 0 },
+            }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className={`border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-shadow ${
               isDark
-                ? "bg-slate-900/80 border-slate-800"
-                : "bg-slate-50 border-slate-200"
+                ? "bg-slate-900/80 border-slate-800 hover:border-purple-500/40 hover:shadow-md"
+                : "bg-slate-50 border-slate-200 hover:border-purple-300 hover:shadow-md"
             }`}
           >
             <div
@@ -288,13 +328,16 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
                 Dalam periode filter
               </p>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ) : null}
 
       {/* 3. Main Chart: Fluktuasi Harian */}
       {lmStats && lmStats.dailyData.length > 0 && (
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
           className={`border rounded-xl p-4 space-y-3 ${
             isDark ? "bg-slate-900/70 border-slate-800" : "bg-slate-50 border-slate-200"
           }`}
@@ -472,8 +515,8 @@ export const TotalLmPertanggalCard: React.FC<TotalLmPertanggalCardProps> = ({
               )}
             </ResponsiveContainer>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };

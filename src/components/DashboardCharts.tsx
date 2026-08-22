@@ -24,6 +24,7 @@ import {
   Package,
   Layers,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { SheetData } from "../types";
 import {
   findRevenueColumn,
@@ -305,13 +306,19 @@ export const DashboardCharts: React.FC<Props> = ({ sheetData, filteredRows }) =>
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+    >
       {/* Chart 1: Tren Revenue Pertanggal */}
-      <div
+      <motion.div
+        whileHover={{ y: -2, transition: { duration: 0.2 } }}
         className={`lg:col-span-7 border rounded-2xl p-5 shadow-sm flex flex-col justify-between transition-colors ${
           isDark
-            ? "bg-slate-900 border-slate-800"
-            : "bg-white border-slate-200"
+            ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+            : "bg-white border-slate-200 hover:border-slate-300"
         }`}
       >
         <div
@@ -591,14 +598,15 @@ export const DashboardCharts: React.FC<Props> = ({ sheetData, filteredRows }) =>
             </ResponsiveContainer>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Chart 2: Analisa Jumlah Service (Pie) */}
-      <div
+      <motion.div
+        whileHover={{ y: -2, transition: { duration: 0.2 } }}
         className={`lg:col-span-5 border rounded-2xl p-5 shadow-sm flex flex-col justify-between transition-colors ${
           isDark
-            ? "bg-slate-900 border-slate-800"
-            : "bg-white border-slate-200"
+            ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+            : "bg-white border-slate-200 hover:border-slate-300"
         }`}
       >
         <div
@@ -748,8 +756,8 @@ export const DashboardCharts: React.FC<Props> = ({ sheetData, filteredRows }) =>
             </ResponsiveContainer>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

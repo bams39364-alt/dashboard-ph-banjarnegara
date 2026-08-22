@@ -131,7 +131,7 @@ export const DashboardFilters: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setIsMobileDrawerOpen(true)}
-            className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border text-left transition active:scale-[0.99] ${
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-left transition active:scale-[0.99] ${
               isDark
                 ? "bg-slate-950/90 border-slate-800 hover:border-slate-700"
                 : "bg-slate-50 border-slate-200 hover:border-slate-300"
@@ -173,24 +173,22 @@ export const DashboardFilters: React.FC<Props> = ({
                 </span>
               </div>
             </div>
-            <ChevronDown
-              className={`w-3.5 h-3.5 shrink-0 ml-1.5 ${
-                isDark ? "text-slate-500" : "text-slate-400"
-              }`}
-            />
-          </button>
-
-          {/* Filter button + Result Count badge */}
-          <button
-            type="button"
-            onClick={() => setIsMobileDrawerOpen(true)}
-            className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Filter</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-black/20 text-[10px] font-mono">
-              {filteredCount}
-            </span>
+            <div className="flex items-center gap-2 shrink-0 ml-1.5">
+              <span
+                className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
+                  isDark
+                    ? "bg-slate-900 border-slate-800 text-slate-400"
+                    : "bg-slate-200/70 border-slate-300 text-slate-600"
+                }`}
+              >
+                {filteredCount} data
+              </span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 ${
+                  isDark ? "text-slate-500" : "text-slate-400"
+                }`}
+              />
+            </div>
           </button>
         </div>
 

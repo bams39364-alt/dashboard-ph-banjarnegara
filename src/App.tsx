@@ -21,6 +21,7 @@ import { DashboardCharts } from "./components/DashboardCharts";
 import { MonthOverMonthComparisonCard } from "./components/MonthOverMonthComparisonCard";
 import { TotalLmPertanggalCard } from "./components/TotalLmPertanggalCard";
 import { ExpenseDashboardView } from "./components/ExpenseDashboardView";
+import { TopSendersCard } from "./components/TopSendersCard";
 import { DatabaseTableView } from "./components/DatabaseTableView";
 import { SpreadsheetSelectorModal } from "./components/SpreadsheetSelectorModal";
 import { DashboardFilters } from "./components/DashboardFilters";
@@ -669,41 +670,21 @@ export default function App() {
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-6"
             >
-              {/* 2. KPI Metrics */}
+              {/* 1. KPI Metrics */}
               <DashboardMetrics
                 sheetData={sheetData}
                 filteredRows={filteredRows}
                 filters={filters}
               />
 
-              {/* 3. Dynamic Charts */}
+              {/* 2. Dynamic Charts: Tren Revenue & Distribusi Layanan */}
               <DashboardCharts sheetData={sheetData} filteredRows={filteredRows} />
 
-              {/* 4. TOTAL LM PERTANGGAL Card */}
-              <TotalLmPertanggalCard
-                lmSheetData={lmSheetData}
-                mainSheetData={sheetData}
+              {/* 3. Top 5 Kiriman Terbanyak Berdasarkan sender_name */}
+              <TopSendersCard
+                sheetData={sheetData}
+                filteredRows={filteredRows}
                 filters={filters}
-                isLoading={isLmLoading || isLoading}
-                onRefreshLmSheet={() => {
-                  const targetId = selectedFile ? selectedFile.id : TARGET_DEFAULT_ID;
-                  loadLmSheetData(targetId, lmSheetData?.activeSheetTitle || "DATA LM");
-                }}
-                onSelectLmTab={(tabTitle) => {
-                  const targetId = selectedFile ? selectedFile.id : TARGET_DEFAULT_ID;
-                  loadLmSheetData(targetId, tabTitle);
-                }}
-              />
-
-              {/* 5. EXPENSE Analytics Card */}
-              <ExpenseDashboardView
-                expenseSheetData={expenseSheetData}
-                filters={filters}
-                isLoading={isExpenseLoading || isLoading}
-                onRefreshExpenseSheet={() => {
-                  const targetId = selectedFile ? selectedFile.id : TARGET_DEFAULT_ID;
-                  loadExpenseSheetData(targetId, expenseSheetData?.activeSheetTitle || "EXPENSE");
-                }}
               />
             </motion.div>
           )}

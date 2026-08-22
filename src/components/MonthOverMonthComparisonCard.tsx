@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   BarChart,
   Bar,
@@ -294,7 +295,12 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
   const averageMonthlyRevenue = summaryInsights.avgRevenueMonthly;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="space-y-6"
+    >
       {/* 1. HEADER & CONTROL BAR */}
       <div
         className={`border rounded-2xl p-5 sm:p-6 shadow-sm transition-colors ${
@@ -305,15 +311,16 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner transition-transform ${
                 isDark
                   ? "bg-indigo-500/10 border border-indigo-500/30 text-indigo-400"
                   : "bg-indigo-50 border border-indigo-200 text-indigo-600"
               }`}
             >
               <BarChart3 className="w-6 h-6" />
-            </div>
+            </motion.div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">
@@ -389,13 +396,29 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
       </div>
 
       {/* 2. KPI SUMMARY HIGHLIGHTS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.06 },
+          },
+        }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* KPI 1: TOTAL REVENUE PERIODE */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 sm:p-5 shadow-sm transition flex flex-col justify-between ${
             isDark
-              ? "bg-slate-900/90 border-slate-800"
-              : "bg-white border-slate-200"
+              ? "bg-slate-900/90 border-slate-800 hover:border-emerald-500/40"
+              : "bg-white border-slate-200 hover:border-emerald-300"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -435,14 +458,19 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* KPI 2: RATA-RATA REVENUE BULANAN */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 sm:p-5 shadow-sm transition flex flex-col justify-between ${
             isDark
-              ? "bg-slate-900/90 border-slate-800"
-              : "bg-white border-slate-200"
+              ? "bg-slate-900/90 border-slate-800 hover:border-indigo-500/40"
+              : "bg-white border-slate-200 hover:border-indigo-300"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -482,14 +510,19 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* KPI 3: BULAN OMSET TERTINGGI (PEAK) */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 sm:p-5 shadow-sm transition flex flex-col justify-between ${
             isDark
-              ? "bg-slate-900/90 border-slate-800"
-              : "bg-white border-slate-200"
+              ? "bg-slate-900/90 border-slate-800 hover:border-amber-500/40"
+              : "bg-white border-slate-200 hover:border-amber-300"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -524,14 +557,19 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
                 : "-"}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* KPI 4: PERTUMBUHAN MoM TERKINI */}
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            show: { opacity: 1, y: 0 },
+          }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className={`border rounded-2xl p-4 sm:p-5 shadow-sm transition flex flex-col justify-between ${
             isDark
-              ? "bg-slate-900/90 border-slate-800"
-              : "bg-white border-slate-200"
+              ? "bg-slate-900/90 border-slate-800 hover:border-indigo-500/40"
+              : "bg-white border-slate-200 hover:border-indigo-300"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -596,8 +634,8 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
               <div className="text-xs text-slate-400">-</div>
             )}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* 3. MAIN CHART: GRAFIK KOMPARASI MoM */}
       <div
@@ -1343,6 +1381,6 @@ export const MonthOverMonthComparisonCard: React.FC<MonthOverMonthComparisonCard
           </table>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
