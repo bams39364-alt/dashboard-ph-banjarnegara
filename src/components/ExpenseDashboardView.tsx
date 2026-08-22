@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -60,7 +61,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
   const [chartType, setChartType] = useState<"bar" | "area">("bar");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [sortField, setSortField] = useState<"date" | "amount" | "category">("date");
+  const [sortField, setSortField] = useState<"date" | "amount" | "category" | "wilayah">("date");
   const [sortAsc, setSortAsc] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -105,8 +106,17 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
         const matchVendor = tx.vendor.toLowerCase().includes(q);
         const matchPay = tx.paymentMethod.toLowerCase().includes(q);
         const matchDate = tx.formattedDate.toLowerCase().includes(q);
+        const matchWilayah = tx.wilayah.toLowerCase().includes(q);
         const matchAmount = String(tx.amount).includes(q);
-        return matchDesc || matchCat || matchVendor || matchPay || matchDate || matchAmount;
+        return (
+          matchDesc ||
+          matchCat ||
+          matchVendor ||
+          matchPay ||
+          matchDate ||
+          matchWilayah ||
+          matchAmount
+        );
       }
       return true;
     });
@@ -124,6 +134,11 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
           ? a.category.localeCompare(b.category)
           : b.category.localeCompare(a.category);
       }
+      if (sortField === "wilayah") {
+        return sortAsc
+          ? a.wilayah.localeCompare(b.wilayah)
+          : b.wilayah.localeCompare(a.wilayah);
+      }
       // Default: date sort
       const res = a.formattedDate.localeCompare(b.formattedDate);
       return sortAsc ? res : -res;
@@ -139,7 +154,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
   }, [sortedTransactions, currentPage, pageSize]);
 
   // Toggle sort
-  const handleSort = (field: "date" | "amount" | "category") => {
+  const handleSort = (field: "date" | "amount" | "category" | "wilayah") => {
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -172,7 +187,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
               <Receipt className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">
                   DATA & ANALITIK EXPENSE
                 </h2>
@@ -185,13 +200,26 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                 >
                   SHEET: EXPENSE
                 </span>
+                {filters.wilayah && filters.wilayah !== "all" && (
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border flex items-center gap-1 ${
+                      isDark
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                        : "bg-amber-50 text-amber-800 border-amber-300"
+                    }`}
+                  >
+                    <MapPin className="w-3 h-3 text-amber-500" />
+                    <span>Wilayah: {filters.wilayah}</span>
+                  </span>
+                )}
               </div>
               <p
                 className={`text-xs mt-0.5 ${
                   isDark ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                Monitoring seluruh pengeluaran PH Banjarnegara
+                Monitoring seluruh pengeluaran operasional & logistik
+                {filters.wilayah !== "all" ? ` — Wilayah ${filters.wilayah}` : ""}
               </p>
             </div>
           </div>
@@ -862,6 +890,15 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                   </div>
                 </th>
                 <th className="px-4 py-3">Keterangan / Uraian</th>
+                <th
+                  onClick={() => handleSort("wilayah")}
+                  className="px-4 py-3 cursor-pointer hover:text-white transition"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Wilayah</span>
+                    <ArrowUpDown className="w-3 h-3" />
+                  </div>
+                </th>
                 <th className="px-4 py-3">Vendor / PIC</th>
                 <th className="px-4 py-3">Metode Bayar</th>
                 <th
@@ -884,7 +921,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
             >
               {paginatedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                     Tidak ditemukan data pengeluaran yang sesuai dengan pencarian
                   </td>
                 </tr>
@@ -912,6 +949,18 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                     </td>
                     <td className="px-4 py-3 max-w-xs truncate font-medium">
                       {tx.description}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-medium border inline-flex items-center gap-1 ${
+                          isDark
+                            ? "bg-slate-900/90 border-slate-800 text-slate-300"
+                            : "bg-slate-50 border-slate-200 text-slate-700"
+                        }`}
+                      >
+                        <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                        <span>{tx.wilayah}</span>
+                      </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-400">
                       {tx.vendor}

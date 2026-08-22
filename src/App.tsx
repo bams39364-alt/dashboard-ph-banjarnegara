@@ -646,6 +646,14 @@ export default function App() {
               onFilterChange={setFilters}
               filteredCount={filteredRows.length}
               totalCount={sheetData.rows.length}
+              extraRows={[
+                ...(lmSheetData?.rows || []),
+                ...(expenseSheetData?.rows || []),
+              ]}
+              extraHeaders={[
+                ...(lmSheetData?.headers || []),
+                ...(expenseSheetData?.headers || []),
+              ]}
             />
           </div>
         )}

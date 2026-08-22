@@ -23,10 +23,28 @@ export function findColumn(headers: string[], pattern: RegExp): string | undefin
 }
 
 /**
- * Find Wilayah / Region column
+ * Find Wilayah / Region column (specifically recognizing Column G / WILAYAH header)
  */
 export function findWilayahColumn(headers: string[]): string | undefined {
-  return (
+  // 1. Exact match for 'wilayah' or variations (case-insensitive & trimmed)
+  const exactWilayah = headers.find((h) => {
+    const clean = h.trim().toLowerCase().replace(/[\s\-_]+/g, "");
+    return (
+      clean === "wilayah" ||
+      clean === "wilayahkerja" ||
+      clean === "region" ||
+      clean === "kota" ||
+      clean === "cabang" ||
+      clean === "area" ||
+      clean === "tujuan" ||
+      clean === "lokasi" ||
+      clean === "hub"
+    );
+  });
+  if (exactWilayah) return exactWilayah;
+
+  // 2. Regex search
+  const regexMatch =
     findColumn(
       headers,
       /^(wilayah|region|kota|city|area|cabang|branch|tujuan|destination|dest|provinsi|province|lokasi|zone|zona|asal|origin|hub|kabupaten|kecamatan)$/i
@@ -35,8 +53,19 @@ export function findWilayahColumn(headers: string[]): string | undefined {
       /wilayah|region|kota|city|area|cabang|branch|tujuan|destination|provinsi|lokasi|zona|asal|hub/i.test(
         h.trim()
       )
-    )
-  );
+    );
+  if (regexMatch) return regexMatch;
+
+  // 3. Fallback: Check if 7th column (Column G, index 6) has a non-numeric text title
+  if (
+    headers.length >= 7 &&
+    headers[6] &&
+    !/tanggal|date|tgl|nominal|rp|jumlah|total|amount|harga|biaya/i.test(headers[6])
+  ) {
+    return headers[6];
+  }
+
+  return undefined;
 }
 
 /**
@@ -599,20 +628,46 @@ export function filterRows(
   return rows.filter((row) => {
     // 1. Wilayah filter
     if (filters.wilayah && filters.wilayah !== "all") {
+      const targetW = filters.wilayah.trim().toLowerCase();
       let rowWilayah = "";
+
       if (wilayahCol && row[wilayahCol] !== undefined && row[wilayahCol] !== null) {
         rowWilayah = String(row[wilayahCol]).trim();
       } else {
-        // Check if any cell in row matches the chosen wilayah
-        const match = Object.values(row).find(
-          (v) => String(v).trim().toLowerCase() === filters.wilayah.toLowerCase()
-        );
-        if (match) {
-          rowWilayah = String(match).trim();
+        // Search in keys containing wilayah
+        for (const k of Object.keys(row)) {
+          if (/wilayah|region|area|cabang|kota|lokasi|tujuan/i.test(k)) {
+            const val = String(row[k] || "").trim();
+            if (val && val !== "-" && val !== "null") {
+              rowWilayah = val;
+              break;
+            }
+          }
+        }
+        // Fallback: 7th column (Column G, index 6)
+        if (!rowWilayah && headers.length >= 7 && row[headers[6]] !== undefined && row[headers[6]] !== null) {
+          const val = String(row[headers[6]]).trim();
+          if (val && val !== "-" && val !== "null") {
+            rowWilayah = val;
+          }
+        }
+        // Fallback search across all values
+        if (!rowWilayah) {
+          const match = Object.values(row).find(
+            (v) => String(v).trim().toLowerCase() === targetW
+          );
+          if (match) {
+            rowWilayah = String(match).trim();
+          }
         }
       }
 
-      if (rowWilayah.toLowerCase() !== filters.wilayah.toLowerCase()) {
+      const rowWLower = rowWilayah.toLowerCase().trim();
+      if (
+        rowWLower !== targetW &&
+        !rowWLower.includes(targetW) &&
+        !targetW.includes(rowWLower)
+      ) {
         return false;
       }
     }
@@ -645,43 +700,65 @@ export function filterRows(
  */
 export function getAvailableFilterOptions(
   rows: Record<string, any>[],
-  headers: string[]
+  headers: string[],
+  extraRows: Record<string, any>[] = [],
+  extraHeaders: string[] = []
 ): {
   years: string[];
   months: { value: string; label: string }[];
   wilayahList: string[];
 } {
-  const wilayahCol = findWilayahColumn(headers);
   const yearsSet = new Set<string>();
   const monthsSet = new Set<string>();
   const wilayahSet = new Set<string>();
 
-  rows.forEach((row) => {
-    // 1. Wilayah options
-    if (wilayahCol && row[wilayahCol] !== undefined && row[wilayahCol] !== null) {
-      const wVal = String(row[wilayahCol]).trim();
-      if (wVal !== "" && wVal !== "-" && wVal !== "null" && wVal !== "undefined") {
+  const processRows = (rList: Record<string, any>[], hList: string[]) => {
+    const wilayahCol = findWilayahColumn(hList);
+
+    rList.forEach((row) => {
+      // 1. Wilayah options
+      let wVal = "";
+      if (wilayahCol && row[wilayahCol] !== undefined && row[wilayahCol] !== null) {
+        wVal = String(row[wilayahCol]).trim();
+      } else {
+        // If no designated wilayah column, check headers with region/city/area keywords
+        for (const h of hList) {
+          if (/wilayah|region|kota|area|cabang|tujuan|provinsi|lokasi|hub/i.test(h)) {
+            const val = String(row[h] || "").trim();
+            if (val && val !== "-" && val !== "null" && val !== "undefined") {
+              wVal = val;
+              break;
+            }
+          }
+        }
+        // Check 7th column (Column G, index 6)
+        if (!wVal && hList.length >= 7 && row[hList[6]] !== undefined && row[hList[6]] !== null) {
+          const val = String(row[hList[6]]).trim();
+          if (val && val !== "-" && val !== "null" && val !== "undefined") {
+            wVal = val;
+          }
+        }
+      }
+
+      if (wVal && wVal !== "" && wVal !== "-" && wVal !== "null" && wVal !== "undefined") {
         wilayahSet.add(wVal);
       }
-    } else {
-      // If no designated wilayah column, check headers with region/city/area keywords
-      headers.forEach((h) => {
-        if (/wilayah|region|kota|area|cabang|tujuan|provinsi/i.test(h)) {
-          const val = String(row[h] || "").trim();
-          if (val && val !== "-") wilayahSet.add(val);
-        }
-      });
-    }
 
-    // 2. Date options
-    const dateInfo = extractRowDateInfo(row, headers);
-    if (dateInfo.year !== null) {
-      yearsSet.add(String(dateInfo.year));
-    }
-    if (dateInfo.month !== null) {
-      monthsSet.add(String(dateInfo.month));
-    }
-  });
+      // 2. Date options
+      const dateInfo = extractRowDateInfo(row, hList);
+      if (dateInfo.year !== null) {
+        yearsSet.add(String(dateInfo.year));
+      }
+      if (dateInfo.month !== null) {
+        monthsSet.add(String(dateInfo.month));
+      }
+    });
+  };
+
+  processRows(rows, headers);
+  if (extraRows.length > 0) {
+    processRows(extraRows, extraHeaders.length > 0 ? extraHeaders : headers);
+  }
 
   // If no years detected from data at all, add current year as fallback
   if (yearsSet.size === 0) {
@@ -1259,6 +1336,13 @@ export interface ExpensePaymentBreakdown {
   percentage: number;
 }
 
+export interface ExpenseWilayahBreakdown {
+  wilayah: string;
+  totalAmount: number;
+  count: number;
+  percentage: number;
+}
+
 export interface ExpenseTransactionItem {
   id: string;
   rawDate: any;
@@ -1284,11 +1368,14 @@ export interface ExpenseStats {
   dailyData: DailyExpenseRecord[];
   categoryBreakdown: ExpenseCategoryBreakdown[];
   paymentMethodBreakdown: ExpensePaymentBreakdown[];
+  wilayahBreakdown: ExpenseWilayahBreakdown[];
   transactions: ExpenseTransactionItem[];
   categoriesList: string[];
+  wilayahList: string[];
   dateColumnName: string | null;
   amountColumnName: string | null;
   categoryColumnName: string | null;
+  wilayahColumnName: string | null;
 }
 
 const CATEGORY_PALETTE = [
@@ -1340,6 +1427,7 @@ export function extractExpenseStats(
 
   const categoryMap: Record<string, { totalAmount: number; count: number }> = {};
   const paymentMap: Record<string, { totalAmount: number; count: number }> = {};
+  const wilayahMap: Record<string, { totalAmount: number; count: number }> = {};
   const transactions: ExpenseTransactionItem[] = [];
 
   filteredRows.forEach((row, idx) => {
@@ -1396,10 +1484,31 @@ export function extractExpenseStats(
       vendor = String(row[vendorCol]).trim();
     }
 
-    // Wilayah
-    let wilayah = "Banjarnegara";
+    // Wilayah (Column G / WILAYAH header)
+    let wilayah = "";
     if (wilayahCol && row[wilayahCol] !== undefined && row[wilayahCol] !== null && String(row[wilayahCol]).trim() !== "") {
       wilayah = String(row[wilayahCol]).trim();
+    } else {
+      // Search in row for any key with wilayah/region/cabang/kota/lokasi
+      for (const k of Object.keys(row)) {
+        if (/wilayah|region|area|cabang|kota|lokasi|tujuan|asal|branch/i.test(k)) {
+          const val = String(row[k] || "").trim();
+          if (val && val !== "-" && val !== "null" && val !== "undefined") {
+            wilayah = val;
+            break;
+          }
+        }
+      }
+      // Check 7th column (Column G, index 6)
+      if (!wilayah && headers.length >= 7 && row[headers[6]] !== undefined && row[headers[6]] !== null) {
+        const val = String(row[headers[6]]).trim();
+        if (val && val !== "-" && val !== "null" && val !== "undefined") {
+          wilayah = val;
+        }
+      }
+    }
+    if (!wilayah || wilayah === "-" || wilayah === "null") {
+      wilayah = "Banjarnegara";
     }
 
     const dateInfo = extractRowDateInfo(row, headers);
@@ -1434,6 +1543,13 @@ export function extractExpenseStats(
     }
     paymentMap[paymentMethod].totalAmount += amount;
     paymentMap[paymentMethod].count += 1;
+
+    // Wilayah aggregation
+    if (!wilayahMap[wilayah]) {
+      wilayahMap[wilayah] = { totalAmount: 0, count: 0 };
+    }
+    wilayahMap[wilayah].totalAmount += amount;
+    wilayahMap[wilayah].count += 1;
 
     // Date Map aggregation
     if (!dateMap.has(dKey)) {
@@ -1556,6 +1672,16 @@ export function extractExpenseStats(
     }))
     .sort((a, b) => b.totalAmount - a.totalAmount);
 
+  // Wilayah breakdown
+  const wilayahBreakdown: ExpenseWilayahBreakdown[] = Object.entries(wilayahMap)
+    .map(([wilayah, info]) => ({
+      wilayah,
+      totalAmount: info.totalAmount,
+      count: info.count,
+      percentage: grandTotalExpense > 0 ? (info.totalAmount / grandTotalExpense) * 100 : 0,
+    }))
+    .sort((a, b) => b.totalAmount - a.totalAmount);
+
   // Find largest transaction
   let largestTransaction: ExpenseTransactionItem | null = null;
   transactions.forEach((tx) => {
@@ -1583,11 +1709,14 @@ export function extractExpenseStats(
     dailyData,
     categoryBreakdown,
     paymentMethodBreakdown,
+    wilayahBreakdown,
     transactions,
     categoriesList: categoryBreakdown.map((c) => c.category),
+    wilayahList: wilayahBreakdown.map((w) => w.wilayah),
     dateColumnName: dateCol || null,
     amountColumnName: amountCol || null,
     categoryColumnName: categoryCol || null,
+    wilayahColumnName: wilayahCol || (headers.length >= 7 ? headers[6] : null),
   };
 }
 

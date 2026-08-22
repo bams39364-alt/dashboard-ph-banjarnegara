@@ -22,6 +22,8 @@ interface Props {
   onFilterChange: (filters: FilterState) => void;
   filteredCount: number;
   totalCount: number;
+  extraRows?: Record<string, any>[];
+  extraHeaders?: string[];
 }
 
 const MONTH_SHORT_LABELS: Record<string, string> = {
@@ -46,6 +48,8 @@ export const DashboardFilters: React.FC<Props> = ({
   onFilterChange,
   filteredCount,
   totalCount,
+  extraRows = [],
+  extraHeaders = [],
 }) => {
   const { isDark } = useTheme();
   const currentYear = String(new Date().getFullYear());
@@ -54,8 +58,8 @@ export const DashboardFilters: React.FC<Props> = ({
   const [wilayahSearchQuery, setWilayahSearchQuery] = useState("");
 
   const { years, months, wilayahList } = useMemo(() => {
-    return getAvailableFilterOptions(rows, headers);
-  }, [rows, headers]);
+    return getAvailableFilterOptions(rows, headers, extraRows, extraHeaders);
+  }, [rows, headers, extraRows, extraHeaders]);
 
   // Filtered list of wilayah based on search query in mobile modal
   const filteredWilayahList = useMemo(() => {
