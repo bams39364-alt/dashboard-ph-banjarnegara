@@ -12,6 +12,7 @@ import {
   Receipt,
   Sun,
   Moon,
+  Pill,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { sheetsService, extractSpreadsheetId } from "./services/googleSheets";
@@ -21,6 +22,7 @@ import { DashboardCharts } from "./components/DashboardCharts";
 import { MonthOverMonthComparisonCard } from "./components/MonthOverMonthComparisonCard";
 import { TotalLmPertanggalCard } from "./components/TotalLmPertanggalCard";
 import { ExpenseDashboardView } from "./components/ExpenseDashboardView";
+import { PaxelFarmaDashboardView } from "./components/PaxelFarmaDashboardView";
 import { TopSendersCard } from "./components/TopSendersCard";
 import { DatabaseTableView } from "./components/DatabaseTableView";
 import { SpreadsheetSelectorModal } from "./components/SpreadsheetSelectorModal";
@@ -45,7 +47,7 @@ const INITIAL_EMPTY_SHEET_DATA: SheetData = {
 export default function App() {
   const { theme, isDark, toggleTheme } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState(sheetsService.isAuthenticated());
-  const [activeView, setActiveView] = useState<"dashboard" | "lm" | "expense" | "charts">("dashboard");
+  const [activeView, setActiveView] = useState<"dashboard" | "lm" | "expense" | "charts" | "farma">("dashboard");
   const [sheetData, setSheetData] = useState<SheetData>(INITIAL_EMPTY_SHEET_DATA);
   const [lmSheetData, setLmSheetData] = useState<SheetData | null>(null);
   const [isLmLoading, setIsLmLoading] = useState(false);
@@ -436,11 +438,11 @@ export default function App() {
             </div>
           </div>
 
-          {/* Center: Segmented Navigation Switcher (Dashboard, Total LM, Expense, Grafik) */}
+          {/* Center: Segmented Navigation Switcher (Dashboard, Total LM, Expense, Grafik, Paxel Farma) */}
           <div className="flex items-center justify-center gap-2 w-full md:w-auto">
-            {/* Nav Tabs (4 columns on mobile, flex on desktop) */}
+            {/* Nav Tabs (5 columns or flex on desktop) */}
             <div
-              className={`w-full md:w-auto grid grid-cols-4 sm:flex p-1 rounded-xl border text-xs shadow-inner transition relative ${
+              className={`w-full md:w-auto flex flex-wrap sm:flex-nowrap p-1 rounded-xl border text-xs shadow-inner transition relative ${
                 isDark
                   ? "bg-slate-900/90 border-slate-800"
                   : "bg-slate-200/70 border-slate-300"
@@ -525,6 +527,26 @@ export default function App() {
                 )}
                 <Zap className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Grafik</span>
+              </button>
+              <button
+                onClick={() => setActiveView("farma")}
+                className={`relative py-2 sm:py-1.5 px-2 sm:px-3.5 rounded-lg font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 z-10 text-[11px] sm:text-xs ${
+                  activeView === "farma"
+                    ? "text-black"
+                    : isDark
+                    ? "text-slate-400 hover:text-white"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {activeView === "farma" && (
+                  <motion.div
+                    layoutId="activeTabPill"
+                    className="absolute inset-0 bg-emerald-500 rounded-lg shadow-sm -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <Pill className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                <span className="truncate">Paxel Farma</span>
               </button>
             </div>
 
@@ -633,8 +655,8 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. STICKY FILTER DROPDOWNS: TAHUN, BULAN, WILAYAH */}
-        {sheetData.rows.length > 0 && (
+        {/* 1. STICKY FILTER DROPDOWNS: TAHUN, BULAN, WILAYAH (Hidden on Farma tab which has its own filters) */}
+        {sheetData.rows.length > 0 && activeView !== "farma" && (
           <div
             className={`sticky top-[58px] sm:top-[61px] z-30 backdrop-blur-md py-1 -mt-2 transition-colors ${
               isDark ? "bg-[#070b0f]/95" : "bg-slate-100/95"
@@ -763,6 +785,20 @@ export default function App() {
 
               {/* 3. Daily Trend & Service Distribution */}
               <DashboardCharts sheetData={sheetData} filteredRows={filteredRows} />
+            </motion.div>
+          )}
+
+          {/* View 5: Dedicated Paxel Farma RSUD Banjarnegara View */}
+          {activeView === "farma" && (
+            <motion.div
+              key="farma"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-6"
+            >
+              <PaxelFarmaDashboardView />
             </motion.div>
           )}
         </AnimatePresence>

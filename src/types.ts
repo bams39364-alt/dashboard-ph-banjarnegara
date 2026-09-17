@@ -27,3 +27,19 @@ export interface FilterState {
   month: string; // e.g. "8" (1-12) or "all"
   wilayah: string; // e.g. "Jakarta" or "all"
 }
+
+export interface FarmaDeliveryRecord {
+  id: string;
+  rawTimestamp: string;
+  date: string; // YYYY-MM-DD
+  day: number;
+  month: number;
+  year: number;
+  faskes?: "RSUD BANJARNEGARA" | "RSI BANJARNEGARA" | string;
+  patientName: string;
+  address: string;
+  kecamatan: string;
+  courierName: string;
+  paymentType: "COD" | "GRATIS" | "REGULER" | "VIP" | string;
+  ongkir: number;
+}
