@@ -823,24 +823,38 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
         }`}
       >
         {/* Table Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className={`p-4 sm:p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          isDark ? "border-slate-800" : "border-slate-200"
+        }`}>
           <div>
-            <h3 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className={`font-bold flex items-center gap-2 ${
+              isDark ? "text-slate-100" : "text-slate-900"
+            }`}>
               <Receipt className="w-4 h-4 text-emerald-500" />
               Daftar Transaksi Pengeluaran (Sheet EXPENSE)
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className={`text-xs mt-0.5 ${
+              isDark ? "text-slate-400" : "text-slate-600"
+            }`}>
               Menampilkan {sortedExpenses.length.toLocaleString("id-ID")} dari {expenses.length.toLocaleString("id-ID")} transaksi tercatat ({selectedMonthLabel})
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border border-slate-200 dark:border-slate-700">
-              Filter Bulan: <strong className="text-slate-800 dark:text-slate-100">{selectedMonthLabel}</strong>
+            <span className={`px-2.5 py-1 rounded-lg font-medium border ${
+              isDark
+                ? "bg-slate-800 text-slate-300 border-slate-700"
+                : "bg-slate-100 text-slate-800 border-slate-300"
+            }`}>
+              Filter Bulan: <strong className={isDark ? "text-slate-100" : "text-slate-900"}>{selectedMonthLabel}</strong>
             </span>
             {selectedCategory !== "ALL" && (
-              <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border border-slate-200 dark:border-slate-700">
-                Kategori: <strong className="text-slate-800 dark:text-slate-100">{selectedCategory}</strong>
+              <span className={`px-2.5 py-1 rounded-lg font-medium border ${
+                isDark
+                  ? "bg-slate-800 text-slate-300 border-slate-700"
+                  : "bg-slate-100 text-slate-800 border-slate-300"
+              }`}>
+                Kategori: <strong className={isDark ? "text-slate-100" : "text-slate-900"}>{selectedCategory}</strong>
               </span>
             )}
           </div>
@@ -851,13 +865,13 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
           <table className="w-full text-left text-xs">
             <thead>
               <tr
-                className={`border-b font-semibold tracking-wide uppercase text-[10px] ${
+                className={`border-b font-bold tracking-wider uppercase text-[11px] ${
                   isDark
-                    ? "bg-slate-800/60 border-slate-800 text-slate-400"
-                    : "bg-slate-50 border-slate-200 text-slate-500"
+                    ? "bg-slate-800/80 border-slate-800 text-slate-300"
+                    : "bg-slate-100 border-slate-200 text-slate-800"
                 }`}
               >
-                <th className="py-3 px-4 w-12 text-center">No</th>
+                <th className={`py-3.5 px-4 w-12 text-center ${isDark ? "text-slate-300" : "text-slate-800"}`}>No</th>
                 <th
                   onClick={() => {
                     if (sortField === "date") setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
@@ -866,15 +880,17 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                       setSortOrder("desc");
                     }
                   }}
-                  className="py-3 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white transition whitespace-nowrap"
+                  className={`py-3.5 px-4 cursor-pointer transition whitespace-nowrap ${
+                    isDark ? "hover:text-white text-slate-300" : "hover:text-slate-950 text-slate-800"
+                  }`}
                 >
                   <div className="flex items-center gap-1">
                     <span>Tanggal</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${isDark ? "text-slate-400" : "text-slate-600"}`} />
                   </div>
                 </th>
-                <th className="py-3 px-4 whitespace-nowrap">Kategori (KET)</th>
-                <th className="py-3 px-4">Deskripsi / Penerima</th>
+                <th className={`py-3.5 px-4 whitespace-nowrap ${isDark ? "text-slate-300" : "text-slate-800"}`}>Kategori (KET)</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Deskripsi / Penerima</th>
                 <th
                   onClick={() => {
                     if (sortField === "nominal") setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
@@ -883,16 +899,18 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                       setSortOrder("desc");
                     }
                   }}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white transition whitespace-nowrap"
+                  className={`py-3.5 px-4 text-right cursor-pointer transition whitespace-nowrap ${
+                    isDark ? "hover:text-white text-slate-300" : "hover:text-slate-950 text-slate-800"
+                  }`}
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span>Nominal (Rp)</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${isDark ? "text-slate-400" : "text-slate-600"}`} />
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className={`divide-y ${isDark ? "divide-slate-800" : "divide-slate-200"}`}>
               {paginatedRows.length > 0 ? (
                 paginatedRows.map((item, idx) => {
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
@@ -901,13 +919,21 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                   const isBbm = catUpper.includes("BBM");
                   const isPacking = catUpper.includes("PACKING") || catUpper.includes("PLASTIK") || catUpper.includes("PERLENGKAPAN");
 
-                  let badgeColor = "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20";
+                  let badgeColor = isDark
+                    ? "bg-slate-500/10 text-slate-300 border-slate-500/30"
+                    : "bg-slate-100 text-slate-800 border-slate-300 font-bold";
                   if (isIncentive) {
-                    badgeColor = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+                    badgeColor = isDark
+                      ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                      : "bg-blue-50 text-blue-900 border-blue-300 font-bold";
                   } else if (isBbm) {
-                    badgeColor = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+                    badgeColor = isDark
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                      : "bg-amber-50 text-amber-900 border-amber-300 font-bold";
                   } else if (isPacking) {
-                    badgeColor = "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
+                    badgeColor = isDark
+                      ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
+                      : "bg-purple-50 text-purple-900 border-purple-300 font-bold";
                   }
 
                   return (
@@ -917,21 +943,29 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                         isDark ? "hover:bg-slate-800/40" : "hover:bg-slate-50"
                       }`}
                     >
-                      <td className="py-3 px-4 text-center text-slate-400 font-medium whitespace-nowrap">
+                      <td className={`py-3.5 px-4 text-center font-mono text-[11px] font-semibold whitespace-nowrap ${
+                        isDark ? "text-slate-400" : "text-slate-600"
+                      }`}>
                         {globalIdx}
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-700 dark:text-slate-300">
+                      <td className={`py-3.5 px-4 whitespace-nowrap font-semibold ${
+                        isDark ? "text-slate-200" : "text-slate-900"
+                      }`}>
                         {formatDateIndo(item.date)}
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${badgeColor}`}>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeColor}`}>
                           {item.category}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                      <td className={`py-3.5 px-4 font-semibold ${
+                        isDark ? "text-slate-200" : "text-slate-900"
+                      }`}>
                         {item.description}
                       </td>
-                      <td className="py-3 px-4 text-right font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                      <td className={`py-3.5 px-4 text-right font-black whitespace-nowrap font-mono ${
+                        isDark ? "text-slate-100" : "text-slate-900"
+                      }`}>
                         {formatIDR(item.nominal)}
                       </td>
                     </tr>
@@ -939,10 +973,10 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
-                    <AlertCircle className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                    <p className="font-semibold">Tidak ada data transaksi pengeluaran</p>
-                    <p className="text-xs mt-1">Coba ubah kata kunci pencarian atau filter kategori di atas</p>
+                  <td colSpan={5} className="py-12 text-center">
+                    <AlertCircle className={`w-8 h-8 mx-auto mb-2 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+                    <p className={`font-semibold ${isDark ? "text-slate-300" : "text-slate-800"}`}>Tidak ada data transaksi pengeluaran</p>
+                    <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}>Coba ubah kata kunci pencarian atau filter kategori di atas</p>
                   </td>
                 </tr>
               )}
@@ -952,7 +986,9 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
 
         {/* Pagination Footer */}
         {sortedExpenses.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className={`p-4 border-t flex flex-wrap items-center justify-between gap-3 text-xs ${
+            isDark ? "border-slate-800 text-slate-400" : "border-slate-200 text-slate-700 font-medium"
+          }`}>
             <div className="flex items-center gap-2">
               <span>Tampilkan per halaman:</span>
               <select
@@ -961,8 +997,8 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className={`px-2 py-1 rounded-lg border text-xs outline-none ${
-                  isDark ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-slate-50 border-slate-300 text-slate-700"
+                className={`px-2 py-1 rounded-lg border text-xs outline-none font-semibold ${
+                  isDark ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-slate-50 border-slate-300 text-slate-800"
                 }`}
               >
                 <option value={10}>10</option>
@@ -970,18 +1006,18 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                 <option value={30}>30</option>
                 <option value={50}>50</option>
               </select>
-              <span>• Total: {sortedExpenses.length.toLocaleString("id-ID")} Baris</span>
+              <span>• Total: <strong className={isDark ? "text-slate-200" : "text-slate-900"}>{sortedExpenses.length.toLocaleString("id-ID")}</strong> Baris</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-slate-400">
-                Halaman {currentPage} dari {totalPages}
+              <span className={isDark ? "text-slate-400" : "text-slate-600 font-medium"}>
+                Halaman <strong className={isDark ? "text-slate-200" : "text-slate-900"}>{currentPage}</strong> dari <strong className={isDark ? "text-slate-200" : "text-slate-900"}>{totalPages}</strong>
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
                 className={`p-1.5 rounded-lg border transition disabled:opacity-30 disabled:cursor-not-allowed ${
-                  isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700"
+                  isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300" : "bg-slate-50 border-slate-300 hover:bg-slate-100 text-slate-800"
                 }`}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -990,7 +1026,7 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
                 className={`p-1.5 rounded-lg border transition disabled:opacity-30 disabled:cursor-not-allowed ${
-                  isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700"
+                  isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300" : "bg-slate-50 border-slate-300 hover:bg-slate-100 text-slate-800"
                 }`}
               >
                 <ChevronRight className="w-4 h-4" />

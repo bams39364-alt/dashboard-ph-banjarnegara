@@ -1735,29 +1735,33 @@ export const PaxelFarmaDashboardView: React.FC = () => {
           isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
         }`}
       >
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className={`p-4 sm:p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          isDark ? "border-slate-800" : "border-slate-200"
+        }`}>
           <div>
-            <h3 className="text-sm font-semibold flex items-center gap-2">
+            <h3 className={`text-sm font-bold flex items-center gap-2 ${
+              isDark ? "text-slate-100" : "text-slate-900"
+            }`}>
               <Layers className="w-4 h-4 text-emerald-500" />
               Daftar Rincian Pengiriman Obat Paxel Farma
             </h3>
-            <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-600"}`}>
               Data historis pengantaran pasien, alamat tujuan, kurir Paxel, dan rincian ongkir
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">Tampilkan:</span>
+            <span className={`text-xs ${isDark ? "text-slate-400" : "text-slate-600 font-medium"}`}>Tampilkan:</span>
             <select
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition focus:outline-none ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition focus:outline-none ${
                 isDark
                   ? "bg-slate-800 border-slate-700 text-white"
-                  : "bg-slate-50 border-slate-300 text-slate-700"
+                  : "bg-slate-50 border-slate-300 text-slate-800"
               }`}
             >
               <option value={15}>15 baris</option>
@@ -1773,24 +1777,24 @@ export const PaxelFarmaDashboardView: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr
-                className={`border-b uppercase font-semibold text-[11px] tracking-wider ${
+                className={`border-b uppercase font-bold text-[11px] tracking-wider ${
                   isDark
-                    ? "bg-slate-800/60 border-slate-800 text-slate-400"
-                    : "bg-slate-50 border-slate-200 text-slate-600"
+                    ? "bg-slate-800/80 border-slate-800 text-slate-300"
+                    : "bg-slate-100 border-slate-200 text-slate-800"
                 }`}
               >
-                <th className="py-3 px-4 w-12">No</th>
-                <th className="py-3 px-4">Tanggal</th>
-                <th className="py-3 px-4">Faskes / RS</th>
-                <th className="py-3 px-4">Nama Pasien</th>
-                <th className="py-3 px-4">Alamat</th>
-                <th className="py-3 px-4">Kecamatan</th>
-                <th className="py-3 px-4">Nama Kurir</th>
-                <th className="py-3 px-4">Tipe Pembayaran</th>
-                <th className="py-3 px-4 text-right">Ongkir</th>
+                <th className={`py-3.5 px-4 w-12 ${isDark ? "text-slate-300" : "text-slate-800"}`}>No</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Tanggal</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Faskes / RS</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Nama Pasien</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Alamat</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Kecamatan</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Nama Kurir</th>
+                <th className={`py-3.5 px-4 ${isDark ? "text-slate-300" : "text-slate-800"}`}>Tipe Pembayaran</th>
+                <th className={`py-3.5 px-4 text-right ${isDark ? "text-slate-300" : "text-slate-800"}`}>Ongkir</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className={`divide-y ${isDark ? "divide-slate-800" : "divide-slate-200"}`}>
               {paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => {
                   const itemIndex = (currentPage - 1) * pageSize + idx + 1;
@@ -1800,19 +1804,29 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                   const isVip = pType === "VIP";
                   const isReguler = pType === "REGULER" || pType === "REGULAR";
 
-                  let badgeStyle = "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30";
+                  let badgeStyle = isDark
+                    ? "bg-sky-500/10 text-sky-400 border-sky-500/30"
+                    : "bg-sky-50 text-sky-900 border-sky-300 font-bold";
                   let dotStyle = "bg-sky-500";
                   if (isCod) {
-                    badgeStyle = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
+                    badgeStyle = isDark
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                      : "bg-amber-50 text-amber-900 border-amber-300 font-bold";
                     dotStyle = "bg-amber-500";
                   } else if (isGratis) {
-                    badgeStyle = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+                    badgeStyle = isDark
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                      : "bg-emerald-50 text-emerald-900 border-emerald-300 font-bold";
                     dotStyle = "bg-emerald-500";
                   } else if (isVip) {
-                    badgeStyle = "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30";
+                    badgeStyle = isDark
+                      ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
+                      : "bg-purple-50 text-purple-900 border-purple-300 font-bold";
                     dotStyle = "bg-purple-500";
                   } else if (isReguler) {
-                    badgeStyle = "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30";
+                    badgeStyle = isDark
+                      ? "bg-sky-500/10 text-sky-400 border-sky-500/30"
+                      : "bg-sky-50 text-sky-900 border-sky-300 font-bold";
                     dotStyle = "bg-sky-500";
                   }
 
@@ -1820,22 +1834,28 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                     <tr
                       key={row.id + "-" + idx}
                       className={`transition ${
-                        isDark ? "hover:bg-slate-800/40" : "hover:bg-slate-50/80"
+                        isDark ? "hover:bg-slate-800/50" : "hover:bg-slate-50"
                       }`}
                     >
-                      <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">{itemIndex}</td>
-                      <td className="py-3 px-4 font-medium whitespace-nowrap">
+                      <td className={`py-3 px-4 font-mono text-[11px] font-semibold ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                        {itemIndex}
+                      </td>
+                      <td className={`py-3 px-4 font-semibold whitespace-nowrap ${isDark ? "text-slate-200" : "text-slate-900"}`}>
                         <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <Calendar className={`w-3.5 h-3.5 ${isDark ? "text-slate-400" : "text-slate-500"}`} />
                           <span>{formatDisplayDate(row.date, row.rawTimestamp)}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
                             row.faskes?.includes("RSI")
-                              ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30"
-                              : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                              ? isDark
+                                ? "bg-teal-500/10 text-teal-400 border-teal-500/30"
+                                : "bg-teal-50 text-teal-900 border-teal-300"
+                              : isDark
+                                ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                                : "bg-blue-50 text-blue-900 border-blue-300"
                           }`}
                         >
                           <span
@@ -1846,32 +1866,36 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                           {row.faskes?.includes("RSI") ? "RSI" : "RSUD"}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <td className={`py-3 px-4 font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                         {row.patientName}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 max-w-xs truncate" title={row.address}>
+                      <td className={`py-3 px-4 max-w-xs truncate font-medium ${isDark ? "text-slate-300" : "text-slate-700"}`} title={row.address}>
                         {row.address || "-"}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-md font-medium text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        <span className={`px-2.5 py-1 rounded-md font-semibold text-[11px] border ${
+                          isDark
+                            ? "bg-slate-800 text-slate-200 border-slate-700"
+                            : "bg-slate-100 text-slate-900 border-slate-300 font-bold"
+                        }`}>
                           {row.kecamatan}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-medium whitespace-nowrap text-slate-800 dark:text-slate-200">
+                      <td className={`py-3 px-4 font-semibold whitespace-nowrap ${isDark ? "text-slate-200" : "text-slate-900"}`}>
                         <div className="flex items-center gap-1.5">
-                          <Truck className="w-3.5 h-3.5 text-purple-400" />
+                          <Truck className={`w-3.5 h-3.5 ${isDark ? "text-purple-400" : "text-purple-600"}`} />
                           <span>{row.courierName}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeStyle}`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeStyle}`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${dotStyle}`} />
                           {row.paymentType}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                      <td className={`py-3 px-4 text-right font-mono font-bold whitespace-nowrap ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                         {formatIDR(row.ongkir)}
                       </td>
                     </tr>

@@ -903,19 +903,23 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
         </div>
 
         {/* Table Content */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+        <div className={`overflow-x-auto rounded-xl border ${
+          isDark ? "border-slate-800/80" : "border-slate-200"
+        }`}>
           <table className="w-full text-xs text-left">
             <thead
-              className={`font-semibold border-b ${
+              className={`font-bold uppercase tracking-wider text-[11px] border-b ${
                 isDark
-                  ? "bg-slate-900/90 text-slate-400 border-slate-800"
-                  : "bg-slate-100 text-slate-600 border-slate-200"
+                  ? "bg-slate-900/90 text-slate-300 border-slate-800"
+                  : "bg-slate-100 text-slate-800 border-slate-200"
               }`}
             >
               <tr>
                 <th
                   onClick={() => handleSort("date")}
-                  className="px-4 py-3 cursor-pointer hover:text-white transition"
+                  className={`px-4 py-3 cursor-pointer transition ${
+                    isDark ? "hover:text-white" : "hover:text-slate-950"
+                  }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Tanggal</span>
@@ -924,7 +928,9 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                 </th>
                 <th
                   onClick={() => handleSort("category")}
-                  className="px-4 py-3 cursor-pointer hover:text-white transition"
+                  className={`px-4 py-3 cursor-pointer transition ${
+                    isDark ? "hover:text-white" : "hover:text-slate-950"
+                  }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Kategori</span>
@@ -934,7 +940,9 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                 <th className="px-4 py-3">Keterangan / Uraian</th>
                 <th
                   onClick={() => handleSort("wilayah")}
-                  className="px-4 py-3 cursor-pointer hover:text-white transition"
+                  className={`px-4 py-3 cursor-pointer transition ${
+                    isDark ? "hover:text-white" : "hover:text-slate-950"
+                  }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Wilayah</span>
@@ -945,7 +953,9 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                 <th className="px-4 py-3">Metode Bayar</th>
                 <th
                   onClick={() => handleSort("amount")}
-                  className="px-4 py-3 text-right cursor-pointer hover:text-white transition"
+                  className={`px-4 py-3 text-right cursor-pointer transition ${
+                    isDark ? "hover:text-white" : "hover:text-slate-950"
+                  }`}
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>Nominal (Rp)</span>
@@ -1004,15 +1014,15 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                         <span>{tx.wilayah}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-400">
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
                       {tx.vendor}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-400">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
                           isDark
                             ? "bg-slate-900 border-slate-800 text-slate-400"
-                            : "bg-slate-100 border-slate-200 text-slate-600"
+                            : "bg-slate-100 border-slate-200 text-slate-700"
                         }`}
                       >
                         {tx.paymentMethod}
