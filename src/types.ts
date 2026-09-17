@@ -43,3 +43,15 @@ export interface FarmaDeliveryRecord {
   paymentType: "COD" | "GRATIS" | "REGULER" | "VIP" | string;
   ongkir: number;
 }
+
+export interface FarmaExpenseRecord {
+  id: string;
+  rawTimestamp: string;
+  date: string; // YYYY-MM-DD
+  day: number;
+  month: number;
+  year: number;
+  category: string; // KET e.g. "Incentive Hero", "BBM", "Operasional"
+  description: string; // DESKRIPSI e.g. "Rama", "Yoga", "Perlengkapan"
+  nominal: number; // NOMINAL e.g. 60000
+}

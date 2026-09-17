@@ -1,29 +1,25 @@
 export const GOOGLE_APPS_SCRIPT_CODE = `/**
  * =========================================================================
  * GOOGLE APPS SCRIPT (kode.gs) - INTEGRASI DASHBOARD PAXEL FARMA
- * (MENDUKUNG SHEET 'RSUD' & SHEET 'RSI' SECARA OTOMATIS)
+ * (MENDUKUNG SHEET 'RSUD', SHEET 'RSI', & SHEET 'EXPENSE' SECARA OTOMATIS)
  * =========================================================================
- * Script ini secara otomatis membaca data pengiriman dari:
- * 1. Sheet bernama "RSUD" / "RSUD BANJARNEGARA"
- * 2. Sheet bernama "RSI" / "RSI BANJARNEGARA"
+ * Script ini secara otomatis membaca data dari:
+ * 1. Sheet "RSUD" / "RSUD BANJARNEGARA" (Pengiriman Pasien COD & GRATIS)
+ * 2. Sheet "RSI" / "RSI BANJARNEGARA" (Pengiriman Pasien REGULER & VIP)
+ * 3. Sheet "EXPENSE" (Biaya Operasional, Incentive Hero, BBM, Perlengkapan)
  * 
- * Script ini secara cerdas mendeteksi:
- * - Format Dua Tabel Bersebelahan (Tabel COD & Tabel GRATIS)
- * - Format Satu Tabel Standar (Kolom: Tanggal, Pasien, Alamat, Kecamatan, Kurir, dsb.)
- * - Posisi header baris (baris 1 s/d 10) secara otomatis.
- *
  * CARA MEMASANG / MEMPERBARUI:
  * 1. Buka Google Spreadsheet Anda.
  * 2. Klik menu: "Ekstensi" (Extensions) > "Apps Script".
  * 3. Hapus seluruh isi file 'Code.gs' / 'kode.gs', lalu tempel (paste) kode ini.
  * 4. Klik tombol Simpan (Save / Ctrl+S).
- * 5. PENTING UNTUK MEMPERBARUI:
+ * 5. PENTING UNTUK MEMPERBARUI (Wajib dilakukan agar kode aktif):
  *    Klik tombol biru "Terapkan" (Deploy) di kanan atas > "Kelola deployment" (Manage deployments).
  *    Klik ikon Pensil (Edit) pada deployment aktif.
  *    Pada pilihan "Versi" (Version), pilih "Versi baru" (New version).
  *    Klik tombol "Terapkan" (Deploy).
  *    (Catatan: Akses wajib diset ke "Siapa saja" / "Anyone").
- * 6. Buka kembali dashboard dan klik "Sinkronkan Sekarang".
+ * 6. Buka kembali dashboard dan klik tombol "Sinkronkan Data".
  */
 
 function doGet(e) {
@@ -34,7 +30,8 @@ function doGet(e) {
     const paramAction = (e && e.parameter && e.parameter.action) ? String(e.parameter.action).trim().toLowerCase() : "";
 
     const sheetSummaries = [];
-    let allRecords = [];
+    let deliveryRecords = [];
+    let expenseRecords = [];
     let processedSheets = [];
 
     // Mode Debug / Cek Sheet yang ada di Spreadsheet
@@ -54,12 +51,28 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // 1. Ekstraksi Sheet Pengiriman & Sheet Expense
     for (let i = 0; i < sheets.length; i++) {
       const sheet = sheets[i];
       const sheetName = sheet.getName().trim();
       const sNameUpper = sheetName.toUpperCase();
       sheetSummaries.push(sheetName);
 
+      // Deteksi sheet EXPENSE
+      if (sNameUpper === "EXPENSE" || sNameUpper.indexOf("EXPENSE") !== -1 || sNameUpper.indexOf("BIAYA") !== -1 || sNameUpper.indexOf("PENGELUARAN") !== -1) {
+        if (paramSheet === "ALL" || paramSheet === "EXPENSE" || sNameUpper.indexOf(paramSheet) !== -1) {
+          const exps = extractExpenseRecords(sheet);
+          expenseRecords = expenseRecords.concat(exps);
+          processedSheets.push({
+            name: sheetName,
+            type: "expense",
+            count: exps.length
+          });
+        }
+        continue;
+      }
+
+      // Deteksi sheet Pengiriman RSUD & RSI
       let targetFaskes = "";
       if (sNameUpper === "RSI" || sNameUpper.indexOf("RSI") !== -1) {
         targetFaskes = "RSI BANJARNEGARA";
@@ -68,19 +81,20 @@ function doGet(e) {
       }
 
       // Filter spesifik jika parameter ?sheet=... digunakan
-      if (paramSheet !== "ALL") {
+      if (paramSheet !== "ALL" && paramSheet !== "EXPENSE") {
         if (sNameUpper !== paramSheet && sNameUpper.indexOf(paramSheet) === -1) {
           continue;
         }
       }
 
-      // Ekstraksi sheet yang sesuai
-      if (targetFaskes || paramSheet !== "ALL") {
+      // Ekstraksi sheet pengiriman obat jika cocok
+      if (targetFaskes || (paramSheet !== "ALL" && paramSheet !== "EXPENSE")) {
         const faskesName = targetFaskes || (sNameUpper.indexOf("RSI") !== -1 ? "RSI BANJARNEGARA" : "RSUD BANJARNEGARA");
         const recs = extractFarmaRecords(sheet, faskesName);
-        allRecords = allRecords.concat(recs);
+        deliveryRecords = deliveryRecords.concat(recs);
         processedSheets.push({
           name: sheetName,
+          type: "delivery",
           faskes: faskesName,
           count: recs.length
         });
@@ -88,16 +102,20 @@ function doGet(e) {
     }
 
     // Fallback jika tidak ada sheet bernama 'RSUD' atau 'RSI'
-    if (allRecords.length === 0 && sheets.length > 0) {
+    if (deliveryRecords.length === 0 && sheets.length > 0 && paramSheet !== "EXPENSE") {
       for (let j = 0; j < sheets.length; j++) {
         const sheet = sheets[j];
         const sName = sheet.getName().trim();
-        const faskesName = sName.toUpperCase().indexOf("RSI") !== -1 ? "RSI BANJARNEGARA" : "RSUD BANJARNEGARA";
+        const sNameUpper = sName.toUpperCase();
+        if (sNameUpper.indexOf("EXPENSE") !== -1 || sNameUpper.indexOf("BIAYA") !== -1) continue;
+
+        const faskesName = sNameUpper.indexOf("RSI") !== -1 ? "RSI BANJARNEGARA" : "RSUD BANJARNEGARA";
         const recs = extractFarmaRecords(sheet, faskesName);
         if (recs.length > 0) {
-          allRecords = allRecords.concat(recs);
+          deliveryRecords = deliveryRecords.concat(recs);
           processedSheets.push({
             name: sName,
+            type: "delivery",
             faskes: faskesName,
             count: recs.length
           });
@@ -105,13 +123,27 @@ function doGet(e) {
       }
     }
 
+    // Hitung total nominal pengeluaran
+    let totalExpenseAmount = 0;
+    for (let k = 0; k < expenseRecords.length; k++) {
+      totalExpenseAmount += (expenseRecords[k].nominal || 0);
+    }
+
+    // Jika request spesifik ?sheet=EXPENSE, jadikan data expense sebagai data utama
+    const isOnlyExpenseRequested = (paramSheet === "EXPENSE");
+    const primaryData = isOnlyExpenseRequested ? expenseRecords : deliveryRecords;
+
     const response = {
       status: "success",
       allSheetsInSpreadsheet: sheetSummaries,
       processedSheets: processedSheets,
-      totalRecords: allRecords.length,
+      totalRecords: deliveryRecords.length,
+      totalExpenses: expenseRecords.length,
+      totalExpenseAmount: totalExpenseAmount,
       updatedAt: new Date().toISOString(),
-      data: allRecords
+      data: primaryData,
+      deliveryData: deliveryRecords,
+      expenses: expenseRecords
     };
 
     return ContentService
@@ -126,7 +158,120 @@ function doGet(e) {
 }
 
 /**
- * Ekstraktor data otomatis yang mendukung dua model sheet:
+ * Ekstraksi Data dari Sheet EXPENSE
+ * Mendeteksi otomatis kolom: TANGGAL, KET (Kategori), DESKRIPSI (Penerima/Uraian), NOMINAL (Biaya)
+ */
+function extractExpenseRecords(sheet) {
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow < 2 || lastCol < 2) return [];
+
+  const maxScan = Math.min(15, lastRow);
+  const sampleValues = sheet.getRange(1, 1, maxScan, lastCol).getValues();
+
+  let headerRowIdx = -1;
+  let colMap = {
+    date: -1,
+    category: -1,
+    desc: -1,
+    nominal: -1
+  };
+
+  for (let r = 0; r < sampleValues.length; r++) {
+    const row = sampleValues[r];
+    let hasDate = false;
+    let hasNominal = false;
+    let hasKet = false;
+
+    for (let c = 0; c < row.length; c++) {
+      const cell = String(row[c] || "").trim().toUpperCase();
+      if (cell.match(/(TANGGAL|TGL|DATE|WAKTU)/)) hasDate = true;
+      if (cell.match(/(NOMINAL|JUMLAH|BIAYA|AMOUNT|RP|TOTAL)/)) hasNominal = true;
+      if (cell.match(/(KET|KETERANGAN|KATEGORI|KEPERLUAN|JENIS)/)) hasKet = true;
+      if (cell.match(/(DESKRIPSI|DESC|URAIAN|CATATAN|NAMA)/)) hasKet = true;
+    }
+
+    if ((hasDate && hasNominal) || (hasDate && hasKet)) {
+      headerRowIdx = r;
+      break;
+    }
+  }
+
+  if (headerRowIdx !== -1) {
+    const hRow = sampleValues[headerRowIdx];
+    for (let c = 0; c < hRow.length; c++) {
+      const val = String(hRow[c] || "").trim().toUpperCase();
+      if (val.match(/(TANGGAL|TGL|DATE|WAKTU)/) && colMap.date === -1) {
+        colMap.date = c;
+      } else if (val.match(/(KET|KETERANGAN|KATEGORI|KEPERLUAN|JENIS)/) && colMap.category === -1) {
+        colMap.category = c;
+      } else if (val.match(/(DESKRIPSI|DESC|URAIAN|NAMA|CATATAN)/) && colMap.desc === -1) {
+        colMap.desc = c;
+      } else if (val.match(/(NOMINAL|JUMLAH|BIAYA|AMOUNT|RP)/) && colMap.nominal === -1) {
+        colMap.nominal = c;
+      }
+    }
+  }
+
+  // Fallback map jika header berada di posisi standar (B=Tanggal, C=Ket, D=Deskripsi, E=Nominal)
+  if (colMap.date === -1) colMap.date = 1;
+  if (colMap.category === -1) colMap.category = 2;
+  if (colMap.desc === -1) colMap.desc = 3;
+  if (colMap.nominal === -1) colMap.nominal = 4;
+
+  const startRow = (headerRowIdx !== -1 ? headerRowIdx + 2 : 4);
+  if (startRow > lastRow) return [];
+  const numRows = lastRow - startRow + 1;
+  const values = sheet.getRange(startRow, 1, numRows, lastCol).getValues();
+  const records = [];
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+    const rawDate = row[colMap.date];
+    const rawCat = colMap.category !== -1 ? row[colMap.category] : "";
+    const rawDesc = colMap.desc !== -1 ? row[colMap.desc] : "";
+    const rawNominal = colMap.nominal !== -1 ? row[colMap.nominal] : 0;
+
+    const catStr = String(rawCat || "").trim();
+    const descStr = String(rawDesc || "").trim();
+    const dateStrCheck = String(rawDate || "").trim().toUpperCase();
+
+    // Lewati baris kosong atau baris header yang terulang
+    if (!rawDate && !catStr && !descStr && !rawNominal) continue;
+    if (dateStrCheck === "TANGGAL" || catStr.toUpperCase() === "KET" || descStr.toUpperCase() === "DESKRIPSI") continue;
+    if (catStr.toUpperCase().indexOf("TOTAL") !== -1 || descStr.toUpperCase().indexOf("TOTAL") !== -1) continue;
+
+    let numNom = 0;
+    if (typeof rawNominal === "number") {
+      numNom = rawNominal;
+    } else {
+      const cleanNum = String(rawNominal || "").replace(/[^0-9]/g, "");
+      numNom = parseInt(cleanNum, 10) || 0;
+    }
+
+    // Jika tidak ada tanggal dan nominal nol, abaikan
+    if (!rawDate && numNom === 0) continue;
+
+    const parsedDate = parseSmartDate(rawDate);
+
+    records.push({
+      id: "EXP-" + (startRow + i),
+      rawTimestamp: String(rawDate || ""),
+      date: parsedDate.dateStr,
+      day: parsedDate.day,
+      month: parsedDate.month,
+      year: parsedDate.year,
+      category: catStr || "Operasional",
+      description: descStr || "-",
+      nominal: numNom
+    });
+  }
+
+  return records;
+}
+
+/**
+ * Ekstraktor data pengiriman otomatis yang mendukung dua model sheet:
  * Model A: Tabel Bersebelahan (Side-by-Side: Kolom COD & Kolom GRATIS)
  * Model B: Tabel Tunggal (Single Unified Table)
  */
@@ -291,12 +436,10 @@ function parseSingleTable(sheet, lastRow, lastCol, sampleValues, faskesName) {
       if (val.match(/(timestamp|tanggal|tgl|waktu|date)/)) {
         colMap.time = c;
       } else if (val.match(/(kurir|pengantar|driver|courier)/)) {
-        // Penting: Deteksi kurir terlebih dahulu agar tidak tertukar dengan "Nama Kurir"
         colMap.courier = c;
       } else if (val.match(/(pasien|penerima)/) || (val.match(/nama/) && !val.match(/kurir/))) {
         colMap.name = c;
       } else if (val.match(/(reg|vip|regular)/)) {
-        // Kolom REG/VIP (khusus RSI)
         colMap.payment = c;
       } else if (val.match(/(pembayaran|bayar|jenis|tipe|metode|status)/)) {
         colMap.payment = c;
@@ -330,12 +473,10 @@ function parseSingleTable(sheet, lastRow, lastCol, sampleValues, faskesName) {
     const rawPayment = colMap.payment !== -1 ? String(row[colMap.payment] || "").trim().toUpperCase() : "";
     const rawOngkir = colMap.ongkir !== -1 ? row[colMap.ongkir] : (isRsi ? 13000 : 8000);
 
-    // Penyesuaian khusus jika sheet RSI memiliki kolom "Alamat" (Kecamatan) & "Desa" (Alamat detail)
     if (colMap.desa !== -1) {
       const desaStr = String(row[colMap.desa] || "").trim();
       if (colMap.addr !== -1) {
         const addrStr = String(row[colMap.addr] || "").trim();
-        // Pada sheet RSI: kolom Alamat berisi nama Kecamatan (misal BANJARNEGARA, BAWANG)
         if (!rawKec) rawKec = addrStr;
         rawAddr = desaStr ? desaStr + (addrStr ? ", " + addrStr : "") : addrStr;
       } else {
@@ -347,14 +488,12 @@ function parseSingleTable(sheet, lastRow, lastCol, sampleValues, faskesName) {
       const parsedDate = parseSmartDate(rawTime);
       let payType = "COD";
       if (isRsi) {
-        // Tipe pembayaran RSI: REGULER atau VIP
         if (rawPayment.indexOf("VIP") !== -1) {
           payType = "VIP";
         } else {
           payType = "REGULER";
         }
       } else {
-        // Tipe pembayaran RSUD: COD atau GRATIS
         if (rawPayment.match(/(GRATIS|FREE|NON COD|NON-COD|BPJS|SUBSIDI|LUNAS|FASKES)/)) {
           payType = "GRATIS";
         } else {
@@ -457,11 +596,9 @@ function parseSmartDate(val) {
     const part1 = parseInt(idMatch[1], 10);
     const part2 = parseInt(idMatch[2], 10);
     const y = parseInt(idMatch[3], 10);
-    // Di Indonesia, angka pertama adalah Hari, angka kedua adalah Bulan
     let d = part1;
     let m = part2;
     if (part2 > 12 && part1 <= 12) {
-      // Kasus MM/DD/YYYY
       m = part1;
       d = part2;
     }
@@ -523,7 +660,7 @@ function parseSmartDate(val) {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("🚀 Paxel Farma API")
-    .addItem("🔍 Tes Ekstraksi Data (RSUD & RSI)", "testEkstraksiData")
+    .addItem("🔍 Tes Ekstraksi Data (RSUD, RSI & EXPENSE)", "testEkstraksiData")
     .addToUi();
 }
 
@@ -531,21 +668,35 @@ function testEkstraksiData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheets = ss.getSheets();
   let msg = "Hasil Pengecekan Sheet di Spreadsheet Anda:\\n\\n";
-  let total = 0;
+  let totalDelivery = 0;
+  let totalExp = 0;
+  let totalExpAmount = 0;
 
   for (let i = 0; i < sheets.length; i++) {
     const s = sheets[i];
     const name = s.getName();
     const upper = name.toUpperCase();
+
+    if (upper.indexOf("EXPENSE") !== -1 || upper.indexOf("BIAYA") !== -1) {
+      const expRecs = extractExpenseRecords(s);
+      let subTot = 0;
+      for (let e = 0; e < expRecs.length; e++) subTot += expRecs[e].nominal;
+      msg += "• Sheet '" + name + "' (EXPENSE): " + expRecs.length + " transaksi (Total: Rp " + subTot.toLocaleString() + ")\\n";
+      totalExp += expRecs.length;
+      totalExpAmount += subTot;
+      continue;
+    }
+
     const faskes = upper.indexOf("RSI") !== -1 ? "RSI BANJARNEGARA" : "RSUD BANJARNEGARA";
     const records = extractFarmaRecords(s, faskes);
-    msg += "• Sheet '" + name + "': " + records.length + " transaksi terbaca (" + faskes + ")\\n";
+    msg += "• Sheet '" + name + "' (Pengiriman): " + records.length + " transaksi (" + faskes + ")\\n";
     if (records.length > 0) {
       msg += "   Contoh: Pasien '" + records[0].patientName + "', Tgl: " + records[0].date + ", Kurir: " + records[0].courierName + "\\n";
     }
-    total += records.length;
+    totalDelivery += records.length;
   }
-  msg += "\\nTotal Seluruh Transaksi Terdeteksi: " + total;
+  msg += "\\nTotal Seluruh Pengiriman Terdeteksi: " + totalDelivery;
+  msg += "\\nTotal Seluruh Pengeluaran (Expense): " + totalExp + " item (Rp " + totalExpAmount.toLocaleString() + ")";
   SpreadsheetApp.getUi().alert(msg);
 }
 `;

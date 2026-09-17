@@ -26,7 +26,10 @@ import {
   Upload,
   FileText,
   AlertTriangle,
-  Code
+  Code,
+  Receipt,
+  Wallet,
+  TrendingDown,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -43,9 +46,11 @@ import {
   Tooltip,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
-import { FarmaDeliveryRecord } from "../types";
+import { FarmaDeliveryRecord, FarmaExpenseRecord } from "../types";
 import { DEFAULT_FARMA_RECORDS, FARMA_DEFAULT_WEBAPP_URL } from "../data/paxelFarmaData";
+import { DEFAULT_FARMA_EXPENSES } from "../data/defaultFarmaExpenses";
 import { GOOGLE_APPS_SCRIPT_CODE } from "../data/googleAppsScriptCode";
+import { FarmaExpenseSection } from "./FarmaExpenseSection";
 import { formatIDR } from "../utils/dataHelper";
 import { useTheme } from "../context/ThemeContext";
 
@@ -87,8 +92,14 @@ function formatDisplayDate(dateStr: string, rawTimestamp: string): string {
 export const PaxelFarmaDashboardView: React.FC = () => {
   const { isDark } = useTheme();
 
+  // Sub-navigation tab: 'delivery' (RSUD & RSI) vs 'expense' (Sheet EXPENSE)
+  const [farmaTab, setFarmaTab] = useState<"delivery" | "expense">("delivery");
+
   // Records state (defaults to preloaded RSUD & RSI records, automatically auto-updated via Google Apps Script)
   const [records, setRecords] = useState<FarmaDeliveryRecord[]>(DEFAULT_FARMA_RECORDS);
+  // Expenses state (defaults to preloaded EXPENSE records, auto-updated via Google Apps Script)
+  const [expenses, setExpenses] = useState<FarmaExpenseRecord[]>(DEFAULT_FARMA_EXPENSES);
+
   const [faskesFilter, setFaskesFilter] = useState<"ALL" | "RSUD BANJARNEGARA" | "RSI BANJARNEGARA">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
@@ -225,13 +236,67 @@ export const PaxelFarmaDashboardView: React.FC = () => {
               localStorage.setItem("paxel_farma_webapp_url", customUrl);
             }
 
+            // Also check and parse expenses if present in the payload
+            let syncedExpenseCount = 0;
+            if (json && Array.isArray(json.expenses) && json.expenses.length > 0) {
+              const cleanExp: FarmaExpenseRecord[] = json.expenses
+                .filter((e: any) => {
+                  const cat = String(e.category || "").trim().toLowerCase();
+                  const nom = Number(e.nominal) || 0;
+                  return cat !== "ket" && !cat.includes("total") && (nom > 0 || e.description);
+                })
+                .map((e: any, idx: number) => {
+                  let dStr = e.date ? String(e.date) : "";
+                  let dDay = Number(e.day);
+                  let dMonth = Number(e.month);
+                  let dYear = Number(e.year);
+
+                  if (!dStr || isNaN(dMonth) || dMonth < 1 || dMonth > 12) {
+                    const rawT = String(e.rawTimestamp || "");
+                    const dObj = new Date(rawT);
+                    if (!isNaN(dObj.getTime())) {
+                      dYear = dObj.getFullYear();
+                      dMonth = dObj.getMonth() + 1;
+                      dDay = dObj.getDate();
+                      dStr = `${dYear}-${String(dMonth).padStart(2, "0")}-${String(dDay).padStart(2, "0")}`;
+                    } else {
+                      dYear = 2026;
+                      dMonth = 6;
+                      dDay = 1;
+                      dStr = "2026-06-01";
+                    }
+                  }
+
+                  return {
+                    id: e.id || `EXP-${idx + 1}`,
+                    rawTimestamp: String(e.rawTimestamp || ""),
+                    date: dStr,
+                    day: dDay || 1,
+                    month: dMonth || 6,
+                    year: dYear || 2026,
+                    category: String(e.category || "Operasional").trim(),
+                    description: String(e.description || "-").trim(),
+                    nominal: Number(e.nominal) || 0,
+                  };
+                });
+
+              if (cleanExp.length > 0) {
+                setExpenses(cleanExp);
+                syncedExpenseCount = cleanExp.length;
+              }
+            }
+
             if (isManual) {
               setSyncStatus({
                 type: "success",
-                message: `Sinkronisasi berhasil! ${cleanData.length.toLocaleString("id-ID")} data pengiriman termutakhir.${
+                message: `Sinkronisasi berhasil! ${cleanData.length.toLocaleString("id-ID")} pengiriman & ${
+                  syncedExpenseCount > 0
+                    ? `${syncedExpenseCount.toLocaleString("id-ID")} pengeluaran (EXPENSE)`
+                    : "pengeluaran default"
+                } termutakhir.${
                   hasRsi
                     ? " (Data sheet RSUD & RSI terbaca penuh)"
-                    : " (Catatan: Baru sheet RSUD yang terkirim. Sheet RSI menunggu deployment versi baru di Apps Script)"
+                    : " (Catatan: Baru sheet RSUD yang terkirim. Update script untuk sheet RSI & EXPENSE)"
                 }`,
               });
               setIsConnectModalOpen(false);
@@ -709,6 +774,10 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                 RSI BANJARNEGARA ({rsiCount.toLocaleString("id-ID")})
               </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 tracking-wide uppercase inline-flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                EXPENSE ({expenses.length.toLocaleString("id-ID")})
+              </span>
             </div>
             <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-1.5 mt-0.5">
               <span>Sinkronisasi otomatis aktif</span>
@@ -716,6 +785,8 @@ export const PaxelFarmaDashboardView: React.FC = () => {
               <span>RSUD: {records.filter((r) => r.faskes?.includes("RSUD")).length.toLocaleString("id-ID")}</span>
               <span>•</span>
               <span>RSI: {rsiCount.toLocaleString("id-ID")}</span>
+              <span>•</span>
+              <span>EXPENSE: {expenses.length.toLocaleString("id-ID")} item</span>
               <span>•</span>
               <span>Update terakhir: {lastSyncedTime} WIB</span>
             </div>
@@ -782,6 +853,53 @@ export const PaxelFarmaDashboardView: React.FC = () => {
         </div>
       </div>
 
+      {/* Sub-navigation Tabs: Pengiriman (RSUD & RSI) vs Biaya (EXPENSE) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <button
+            onClick={() => setFarmaTab("delivery")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+              farmaTab === "delivery"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Truck className="w-4 h-4 text-sky-500" />
+            <span>Pengiriman Obat (RSUD & RSI)</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+              {records.length.toLocaleString("id-ID")}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFarmaTab("expense")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+              farmaTab === "expense"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Receipt className="w-4 h-4 text-rose-500" />
+            <span>Biaya & Pengeluaran (EXPENSE)</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+              {expenses.length.toLocaleString("id-ID")}
+            </span>
+          </button>
+        </div>
+
+        <button
+          onClick={() => setIsKodeModalOpen(true)}
+          className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
+            isDark
+              ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+              : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          <Code className="w-3.5 h-3.5 text-blue-500" />
+          <span>Lihat Script (kode.gs)</span>
+        </button>
+      </div>
+
       {/* Sync Status Alert Banner */}
       {syncStatus && (
         <div
@@ -805,8 +923,18 @@ export const PaxelFarmaDashboardView: React.FC = () => {
         </div>
       )}
 
-      {/* 6 Executive KPI Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+      {farmaTab === "expense" ? (
+        <FarmaExpenseSection
+          expenses={expenses}
+          deliveryRecords={records}
+          isSyncing={isSyncing}
+          onRefresh={() => syncFromWebApp(undefined, true)}
+          onOpenKodeModal={() => setIsKodeModalOpen(true)}
+        />
+      ) : (
+        <div className="space-y-5">
+          {/* 6 Executive KPI Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {/* Metric 1: Total Kiriman */}
         <div
           className={`p-4 rounded-2xl border shadow-sm transition ${
@@ -1841,6 +1969,8 @@ export const PaxelFarmaDashboardView: React.FC = () => {
           </div>
         </div>
       </div>
+        </div>
+      )}
 
       {/* MODAL: Pengaturan Endpoint Google Apps Script & Kode Sumber */}
       <AnimatePresence>
@@ -2009,7 +2139,7 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                   <Sparkles className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
                   <div className="space-y-1.5 text-[11px] leading-relaxed">
                     <p className="font-bold text-xs text-indigo-900 dark:text-indigo-200">
-                      ⚡ Cara Mengaktifkan Sheet RSI & RSUD (Paling Penting):
+                      ⚡ Cara Mengaktifkan Sheet RSUD, RSI & EXPENSE:
                     </p>
                     <ol className="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-300">
                       <li>Buka Google Spreadsheet Anda &gt; klik menu <strong>Ekstensi (Extensions)</strong> &gt; <strong>Apps Script</strong>.</li>
@@ -2021,14 +2151,14 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                       <li>
                         Klik ikon <strong>Pensil (Edit)</strong> pada deployment aktif, pada bagian <strong>Versi</strong> pilih <strong>"Versi baru" (New version)</strong>, lalu klik <strong>Terapkan (Deploy)</strong>.
                       </li>
-                      <li>Kembali ke dashboard ini dan klik tombol <strong>"Sinkronkan"</strong>. Sheet RSUD dan RSI akan langsung terbaca otomatis 100%!</li>
+                      <li>Kembali ke dashboard ini dan klik tombol <strong>"Sinkronkan"</strong>. Sheet RSUD, RSI, dan EXPENSE akan langsung terbaca otomatis 100%!</li>
                     </ol>
                   </div>
                 </div>
 
                 <div className="relative">
                   <div className="flex items-center justify-between px-4 py-2 bg-slate-800 text-slate-300 rounded-t-xl text-[11px] font-mono border-b border-slate-700">
-                    <span>kode.gs (Mendukung Otomatis Sheet RSUD & Sheet RSI)</span>
+                    <span>kode.gs (Mendukung Sheet RSUD, RSI & EXPENSE)</span>
                     <button
                       onClick={handleCopyScript}
                       className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 font-sans font-semibold transition"
