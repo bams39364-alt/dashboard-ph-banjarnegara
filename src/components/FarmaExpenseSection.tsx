@@ -89,7 +89,15 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [selectedMonth, setSelectedMonth] = useState<string>("ALL");
+  // Default to current month (e.g. 2026-9) if data exists
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    const currentKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+    const hasCurrent =
+      expenses.some((e) => `${e.year}-${e.month}` === currentKey) ||
+      deliveryRecords.some((d) => `${d.year}-${d.month}` === currentKey);
+    return hasCurrent ? currentKey : "ALL";
+  });
   const [sortField, setSortField] = useState<"date" | "nominal">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -112,13 +120,19 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
   // Unique months list combined from both expenses and delivery records
   const monthOptions = useMemo(() => {
     const map = new Map<string, { key: string; label: string; year: number; month: number }>();
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth() + 1;
 
     const addMonth = (year?: number, month?: number) => {
       if (year && month) {
         const key = `${year}-${month}`;
         if (!map.has(key)) {
           const dateObj = new Date(year, month - 1, 1);
-          const label = dateObj.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+          let label = dateObj.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+          if (year === curYear && month === curMonth) {
+            label += " (Bulan Ini)";
+          }
           map.set(key, { key, label, year, month });
         }
       }
@@ -132,6 +146,16 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
       return b.month - a.month;
     });
   }, [expenses, deliveryRecords]);
+
+  // If selectedMonth is not in available options after new data loads, fallback gracefully
+  React.useEffect(() => {
+    if (selectedMonth !== "ALL" && monthOptions.length > 0) {
+      const exists = monthOptions.some((m) => m.key === selectedMonth);
+      if (!exists) {
+        setSelectedMonth(monthOptions[0].key);
+      }
+    }
+  }, [monthOptions, selectedMonth]);
 
   // Active month label
   const selectedMonthLabel = useMemo(() => {

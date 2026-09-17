@@ -103,7 +103,12 @@ export const PaxelFarmaDashboardView: React.FC = () => {
   const [faskesFilter, setFaskesFilter] = useState<"ALL" | "RSUD BANJARNEGARA" | "RSI BANJARNEGARA">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
-  const [monthFilter, setMonthFilter] = useState<string>("ALL");
+  // Default to current month (e.g. September) if data exists
+  const [monthFilter, setMonthFilter] = useState<string>(() => {
+    const curMonth = new Date().getMonth() + 1;
+    const hasCurrent = DEFAULT_FARMA_RECORDS.some((r) => r.month === curMonth);
+    return hasCurrent ? String(curMonth) : "ALL";
+  });
   const [kecamatanFilter, setKecamatanFilter] = useState<string>("ALL");
   const [courierFilter, setCourierFilter] = useState<string>("ALL");
 
@@ -442,17 +447,33 @@ export const PaxelFarmaDashboardView: React.FC = () => {
   // Unique lists for filter dropdowns
   const availableMonths = useMemo(() => {
     const map = new Map<string, { month: number; year: number; label: string }>();
+    const now = new Date();
+    const curM = now.getMonth() + 1;
+    const curY = now.getFullYear();
+
     records.forEach((r) => {
       if (r.month && r.year) {
         const key = `${r.month}`;
         if (!map.has(key)) {
           const mName = MONTH_NAMES[r.month] || `Bulan ${r.month}`;
-          map.set(key, { month: r.month, year: r.year, label: `${mName} ${r.year}` });
+          const isCurrent = r.month === curM && r.year === curY;
+          map.set(key, {
+            month: r.month,
+            year: r.year,
+            label: isCurrent ? `${mName} ${r.year} (Bulan Ini)` : `${mName} ${r.year}`,
+          });
         }
       }
     });
-    return Array.from(map.values()).sort((a, b) => a.month - b.month);
+    return Array.from(map.values()).sort((a, b) => b.month - a.month);
   }, [records]);
+
+  // Active month label
+  const activeMonthLabel = useMemo(() => {
+    if (monthFilter === "ALL") return "Semua Periode";
+    const found = availableMonths.find((m) => String(m.month) === monthFilter);
+    return found ? found.label : `Bulan ${monthFilter}`;
+  }, [monthFilter, availableMonths]);
 
   const availableKecamatan = useMemo(() => {
     const set = new Set<string>();
@@ -933,6 +954,25 @@ export const PaxelFarmaDashboardView: React.FC = () => {
         />
       ) : (
         <div className="space-y-5">
+          {/* Header info badge showing selected month */}
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-medium">Periode Tampilan:</span>
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                {activeMonthLabel}
+              </span>
+            </div>
+            {monthFilter !== "ALL" && (
+              <button
+                onClick={() => setMonthFilter("ALL")}
+                className="text-xs text-slate-500 hover:text-emerald-500 underline transition cursor-pointer"
+              >
+                Tampilkan Semua Periode
+              </button>
+            )}
+          </div>
+
           {/* 6 Executive KPI Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {/* Metric 1: Total Kiriman */}
@@ -951,8 +991,8 @@ export const PaxelFarmaDashboardView: React.FC = () => {
             <span className="text-2xl font-bold tracking-tight">{metrics.total.toLocaleString("id-ID")}</span>
             <span className="text-[11px] text-slate-500">paket</span>
           </div>
-          <div className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-            100% Pengiriman Terdata
+          <div className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
+            {monthFilter === "ALL" ? "100% Pengiriman Terdata" : activeMonthLabel}
           </div>
         </div>
 
@@ -1356,7 +1396,7 @@ export const PaxelFarmaDashboardView: React.FC = () => {
         <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
           <div>
             Menampilkan <strong className="text-emerald-500 font-semibold">{filteredRecords.length.toLocaleString("id-ID")}</strong> dari{" "}
-            {records.length.toLocaleString("id-ID")} total pengiriman obat
+            {records.length.toLocaleString("id-ID")} total pengiriman obat ({activeMonthLabel})
           </div>
           <div className="flex items-center gap-1.5 text-[11px]">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
