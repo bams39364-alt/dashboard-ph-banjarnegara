@@ -49,6 +49,18 @@ interface FarmaExpenseSectionProps {
   onOpenKodeModal: () => void;
 }
 
+/**
+ * Memeriksa apakah suatu baris kategori (KET) pengeluaran harus dikecualikan dari hitungan:
+ * Sesuai permintaan pengguna: "untuk data header KET yang berisi Prive dan Expense RSI jangan ikut di hitung"
+ */
+export const isExcludedExpenseCategory = (category?: string): boolean => {
+  if (!category) return false;
+  const clean = category.trim().toUpperCase();
+  if (clean.includes("PRIVE")) return true;
+  if (clean.includes("EXPENSE RSI") || clean.includes("EXPENSES RSI") || clean.includes("BIAYA RSI") || (clean.includes("RSI") && clean.includes("EXPENSE"))) return true;
+  return false;
+};
+
 const CATEGORY_COLORS: Record<string, string> = {
   "Incentive Hero": "#3b82f6", // Blue
   "BBM Armada": "#f59e0b", // Amber
@@ -108,16 +120,21 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
   // Active chart view
   const [chartMode, setChartMode] = useState<"daily" | "courier">("daily");
 
-  // Unique categories list
+  // Filter valid expenses: Kecualikan data KET yang berisi 'Prive' atau 'Expense RSI'
+  const validExpenses = useMemo(() => {
+    return expenses.filter((e) => !isExcludedExpenseCategory(e.category));
+  }, [expenses]);
+
+  // Unique categories list (hanya dari kategori yang valid dihitung)
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    expenses.forEach((e) => {
+    validExpenses.forEach((e) => {
       if (e.category) set.add(e.category);
     });
     return Array.from(set).sort();
-  }, [expenses]);
+  }, [validExpenses]);
 
-  // Unique months list combined from both expenses and delivery records
+  // Unique months list combined from both valid expenses and delivery records
   const monthOptions = useMemo(() => {
     const map = new Map<string, { key: string; label: string; year: number; month: number }>();
     const now = new Date();
@@ -138,14 +155,14 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
       }
     };
 
-    expenses.forEach((e) => addMonth(e.year, e.month));
+    validExpenses.forEach((e) => addMonth(e.year, e.month));
     deliveryRecords.forEach((d) => addMonth(d.year, d.month));
 
     return Array.from(map.values()).sort((a, b) => {
       if (a.year !== b.year) return b.year - a.year;
       return b.month - a.month;
     });
-  }, [expenses, deliveryRecords]);
+  }, [validExpenses, deliveryRecords]);
 
   // If selectedMonth is not in available options after new data loads, fallback gracefully
   React.useEffect(() => {
@@ -187,9 +204,9 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
     return filteredDeliveries.reduce((acc, cur) => acc + (cur.ongkir || 0), 0);
   }, [filteredDeliveries]);
 
-  // Filtered Expense Records
+  // Filtered Expense Records (hanya dari validExpenses yang mengecualikan Prive & Expense RSI)
   const filteredExpenses = useMemo(() => {
-    return expenses.filter((e) => {
+    return validExpenses.filter((e) => {
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -214,7 +231,7 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
 
       return true;
     });
-  }, [expenses, searchQuery, selectedCategory, selectedMonth]);
+  }, [validExpenses, searchQuery, selectedCategory, selectedMonth]);
 
   // Sorted Records
   const sortedExpenses = useMemo(() => {
@@ -385,8 +402,11 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
                 {selectedMonthLabel}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Filter bulan mengatur perhitungan Laba Bersih, Omset Pengiriman, serta grafik tren pengeluaran secara terpadu.
+            <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1.5">
+              <span>Filter bulan mengatur perhitungan Laba Bersih & tren pengeluaran operasional.</span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                Prive & Expense RSI otomatis tidak dihitung
+              </span>
             </p>
           </div>
 
@@ -836,7 +856,7 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
             <p className={`text-xs mt-0.5 ${
               isDark ? "text-slate-400" : "text-slate-600"
             }`}>
-              Menampilkan {sortedExpenses.length.toLocaleString("id-ID")} dari {expenses.length.toLocaleString("id-ID")} transaksi tercatat ({selectedMonthLabel})
+              Menampilkan {sortedExpenses.length.toLocaleString("id-ID")} dari {validExpenses.length.toLocaleString("id-ID")} transaksi operasional dihitung ({selectedMonthLabel})
             </p>
           </div>
 

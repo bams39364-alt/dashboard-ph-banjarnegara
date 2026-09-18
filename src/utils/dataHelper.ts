@@ -1481,6 +1481,19 @@ export function extractExpenseStats(
       category = String(row[categoryCol]).trim();
     }
 
+    // Pengecualian Data Header KET yang berisi 'Prive' atau 'Expense RSI':
+    // Permintaan pengguna: "untuk data header KET yang berisi Prive dan Expense RSI jangan ikut di hitung ya"
+    const catUpper = category.toUpperCase();
+    if (
+      catUpper.includes("PRIVE") ||
+      catUpper.includes("EXPENSE RSI") ||
+      catUpper.includes("EXPENSES RSI") ||
+      catUpper.includes("BIAYA RSI") ||
+      (catUpper.includes("RSI") && catUpper.includes("EXPENSE"))
+    ) {
+      return; // Lewati dan jangan dihitung
+    }
+
     // Description
     let description = "-";
     if (descCol && row[descCol] !== undefined && row[descCol] !== null && String(row[descCol]).trim() !== "") {

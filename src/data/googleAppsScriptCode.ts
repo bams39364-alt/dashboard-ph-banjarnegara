@@ -241,6 +241,18 @@ function extractExpenseRecords(sheet) {
     if (dateStrCheck === "TANGGAL" || catStr.toUpperCase() === "KET" || descStr.toUpperCase() === "DESKRIPSI") continue;
     if (catStr.toUpperCase().indexOf("TOTAL") !== -1 || descStr.toUpperCase().indexOf("TOTAL") !== -1) continue;
 
+    // Kecualikan data KET yang berisi 'Prive' dan 'Expense RSI'
+    const catUpper = catStr.toUpperCase();
+    if (
+      catUpper.indexOf("PRIVE") !== -1 ||
+      catUpper.indexOf("EXPENSE RSI") !== -1 ||
+      catUpper.indexOf("EXPENSES RSI") !== -1 ||
+      catUpper.indexOf("BIAYA RSI") !== -1 ||
+      (catUpper.indexOf("RSI") !== -1 && catUpper.indexOf("EXPENSE") !== -1)
+    ) {
+      continue;
+    }
+
     let numNom = 0;
     if (typeof rawNominal === "number") {
       numNom = rawNominal;

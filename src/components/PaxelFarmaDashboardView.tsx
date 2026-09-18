@@ -248,6 +248,16 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                 .filter((e: any) => {
                   const cat = String(e.category || "").trim().toLowerCase();
                   const nom = Number(e.nominal) || 0;
+                  // Lewati header KET yang berisi Prive atau Expense RSI (sesuai instruksi pengguna)
+                  if (
+                    cat.includes("prive") ||
+                    cat.includes("expense rsi") ||
+                    cat.includes("expenses rsi") ||
+                    cat.includes("biaya rsi") ||
+                    (cat.includes("rsi") && cat.includes("expense"))
+                  ) {
+                    return false;
+                  }
                   return cat !== "ket" && !cat.includes("total") && (nom > 0 || e.description);
                 })
                 .map((e: any, idx: number) => {
@@ -313,9 +323,20 @@ export const PaxelFarmaDashboardView: React.FC = () => {
       } catch (err: any) {
         console.warn("Gagal mengambil data dari Google Apps Script:", err);
         if (isManual) {
+          const errMsg = String(err?.message || "");
+          let userExplanation = "Periksa kembali URL Web App dan pastikan deployment diset ke 'Anyone'.";
+          
+          if (errMsg.includes("404")) {
+            userExplanation = "URL Google Apps Script tidak ditemukan (HTTP 404). Kemungkinan URL salah ketik, terpotong, atau belum di-Deploy sebagai 'Aplikasi Web' (Web App) berakhiran '/exec'. Pastikan Anda menekan Deploy > Deployment Baru > Aplikasi Web.";
+          } else if (errMsg.includes("403") || errMsg.includes("401")) {
+            userExplanation = "Akses ditolak (HTTP 403/401). Pastikan pada setelan deployment Apps Script, 'Siapa yang memiliki akses' (Who has access) disetel ke 'Siapa saja' (Anyone), bukan 'Hanya saya'.";
+          } else if (errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError")) {
+            userExplanation = "Gagal menghubungi server (CORS / Jaringan). Pastikan Web App sudah di-deploy dengan akses 'Anyone' agar browser diizinkan membaca data JSON.";
+          }
+
           setSyncStatus({
             type: "error",
-            message: `Gagal sinkronisasi: ${err.message || "Periksa kembali URL Web App dan pastikan akses diset ke 'Anyone'."}`,
+            message: `Gagal sinkronisasi: ${errMsg ? `${errMsg}. ` : ""}${userExplanation}`,
           });
         }
       } finally {
@@ -1959,22 +1980,24 @@ export const PaxelFarmaDashboardView: React.FC = () => {
         </div>
 
         {/* Pagination Bar */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="text-slate-500">
-            Halaman <strong>{currentPage}</strong> dari <strong>{totalPages}</strong> (Total{" "}
-            {filteredRecords.length.toLocaleString("id-ID")} baris)
+        <div className={`p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs ${
+          isDark ? "border-slate-800" : "border-slate-200"
+        }`}>
+          <div className={isDark ? "text-slate-400" : "text-slate-700 font-medium"}>
+            Halaman <strong className={isDark ? "text-slate-200" : "text-slate-900"}>{currentPage}</strong> dari <strong className={isDark ? "text-slate-200" : "text-slate-900"}>{totalPages}</strong> (Total{" "}
+            <strong className={isDark ? "text-slate-200" : "text-slate-900"}>{filteredRecords.length.toLocaleString("id-ID")}</strong> baris)
           </div>
 
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition ${
+              className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition font-semibold ${
                 currentPage === 1
                   ? "opacity-40 cursor-not-allowed border-transparent text-slate-400"
                   : isDark
                   ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-                  : "bg-white border-slate-300 hover:bg-slate-100 text-slate-700"
+                  : "bg-white border-slate-300 hover:bg-slate-100 text-slate-800 shadow-sm"
               }`}
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -2002,12 +2025,12 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                   <button
                     key={`page-${pNum}`}
                     onClick={() => setCurrentPage(pNum)}
-                    className={`w-7 h-7 rounded-lg font-medium transition ${
+                    className={`w-7 h-7 rounded-lg font-bold transition text-xs ${
                       currentPage === pNum
-                        ? "bg-emerald-500 text-white font-bold"
+                        ? "bg-emerald-500 text-white shadow-sm"
                         : isDark
                         ? "text-slate-400 hover:bg-slate-800 hover:text-white"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        : "text-slate-700 hover:bg-slate-200 hover:text-slate-950"
                     }`}
                   >
                     {pNum}
@@ -2019,12 +2042,12 @@ export const PaxelFarmaDashboardView: React.FC = () => {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition ${
+              className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition font-semibold ${
                 currentPage === totalPages
                   ? "opacity-40 cursor-not-allowed border-transparent text-slate-400"
                   : isDark
                   ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-                  : "bg-white border-slate-300 hover:bg-slate-100 text-slate-700"
+                  : "bg-white border-slate-300 hover:bg-slate-100 text-slate-800 shadow-sm"
               }`}
             >
               <span>Berikutnya</span>
@@ -2084,8 +2107,23 @@ export const PaxelFarmaDashboardView: React.FC = () => {
                     }`}
                   />
                   <p className="mt-1.5 text-[11px] text-slate-500">
-                    Endpoint aktif ini otomatis tersimpan dan digunakan setiap kali Anda membuka dashboard.
+                    Endpoint aktif ini otomatis tersimpan dan digunakan setiap kali Anda membuka dashboard. Pastikan URL berakhiran <code className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">/exec</code> (bukan /edit atau /dev).
                   </p>
+                </div>
+
+                <div
+                  className={`p-3 rounded-xl border text-[11px] leading-relaxed space-y-1 ${
+                    isDark ? "bg-amber-950/20 border-amber-800/40 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-900"
+                  }`}
+                >
+                  <strong className="font-semibold block text-amber-600 dark:text-amber-400">
+                    ⚠️ Jika Muncul "HTTP 404" atau "Akses Ditolak":
+                  </strong>
+                  <ul className="list-disc list-inside space-y-0.5 text-slate-600 dark:text-slate-400">
+                    <li>Pastikan URL disalin dari <strong>Deploy &gt; Kelola deployment &gt; URL Aplikasi Web</strong>.</li>
+                    <li>Pastikan <em>"Siapa yang memiliki akses"</em> dipilih <strong>"Siapa saja" (Anyone)</strong>.</li>
+                    <li>Jangan gunakan URL editor spreadsheet atau URL Google Apps Script yang berakhiran <code className="font-mono">/edit</code>.</li>
+                  </ul>
                 </div>
 
                 <div

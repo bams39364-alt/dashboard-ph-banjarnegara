@@ -985,50 +985,58 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
                       isDark ? "hover:bg-slate-800/40" : "hover:bg-slate-50"
                     }`}
                   >
-                    <td className="px-4 py-3 whitespace-nowrap font-medium">
+                    <td className={`px-4 py-3 whitespace-nowrap font-medium ${
+                      isDark ? "text-slate-300" : "text-slate-900"
+                    }`}>
                       {tx.formattedDate}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
                           isDark
                             ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            : "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-rose-50 text-rose-900 border-rose-300"
                         }`}
                       >
                         {tx.category}
                       </span>
                     </td>
-                    <td className="px-4 py-3 max-w-xs truncate font-medium">
+                    <td className={`px-4 py-3 max-w-xs truncate font-medium ${
+                      isDark ? "text-slate-300" : "text-slate-900"
+                    }`}>
                       {tx.description}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-medium border inline-flex items-center gap-1 ${
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border inline-flex items-center gap-1 ${
                           isDark
                             ? "bg-slate-900/90 border-slate-800 text-slate-300"
-                            : "bg-slate-50 border-slate-200 text-slate-700"
+                            : "bg-slate-100 border-slate-300 text-slate-800"
                         }`}
                       >
                         <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
                         <span>{tx.wilayah}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
+                    <td className={`px-4 py-3 whitespace-nowrap font-semibold ${
+                      isDark ? "text-slate-300" : "text-slate-900"
+                    }`}>
                       {tx.vendor}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${
                           isDark
                             ? "bg-slate-900 border-slate-800 text-slate-400"
-                            : "bg-slate-100 border-slate-200 text-slate-700"
+                            : "bg-slate-100 border-slate-300 text-slate-800"
                         }`}
                       >
                         {tx.paymentMethod}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right font-mono font-bold text-rose-500">
+                    <td className={`px-4 py-3 whitespace-nowrap text-right font-mono font-bold ${
+                      isDark ? "text-rose-400" : "text-rose-700"
+                    }`}>
                       {formatIDR(tx.amount)}
                     </td>
                   </tr>
@@ -1041,9 +1049,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
         {/* Pagination & Count footer */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs">
           <div
-            className={`${
-              isDark ? "text-slate-400" : "text-slate-500"
-            }`}
+            className={isDark ? "text-slate-400" : "text-slate-700 font-medium"}
           >
             Menampilkan{" "}
             <span className="font-semibold text-rose-500">
@@ -1053,7 +1059,7 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
             <span className="font-semibold text-rose-500">
               {Math.min(currentPage * pageSize, filteredTransactions.length)}
             </span>{" "}
-            dari <span className="font-semibold">{filteredTransactions.length}</span> transaksi
+            dari <span className={`font-bold ${isDark ? "text-slate-200" : "text-slate-900"}`}>{filteredTransactions.length}</span> transaksi
           </div>
 
           {/* Prev / Next buttons */}
@@ -1061,25 +1067,25 @@ export const ExpenseDashboardView: React.FC<ExpenseDashboardViewProps> = ({
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className={`p-1.5 rounded-lg border transition disabled:opacity-30 disabled:cursor-not-allowed ${
+              className={`p-1.5 rounded-lg border transition font-semibold disabled:opacity-30 disabled:cursor-not-allowed ${
                 isDark
                   ? "bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300"
-                  : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm"
+                  : "bg-white border-slate-300 hover:bg-slate-100 text-slate-800 shadow-sm"
               }`}
               title="Halaman Sebelumnya"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-3 font-semibold">
+            <span className={`px-3 font-bold ${isDark ? "text-slate-300" : "text-slate-900"}`}>
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className={`p-1.5 rounded-lg border transition disabled:opacity-30 disabled:cursor-not-allowed ${
+              className={`p-1.5 rounded-lg border transition font-semibold disabled:opacity-30 disabled:cursor-not-allowed ${
                 isDark
                   ? "bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300"
-                  : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm"
+                  : "bg-white border-slate-300 hover:bg-slate-100 text-slate-800 shadow-sm"
               }`}
               title="Halaman Selanjutnya"
             >
