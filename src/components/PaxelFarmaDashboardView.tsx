@@ -14,6 +14,7 @@ import {
   Truck,
   MapPin,
   Calendar,
+  CalendarDays,
   X,
   ChevronLeft,
   ChevronRight,
@@ -594,6 +595,7 @@ export const PaxelFarmaDashboardView: React.FC = () => {
     let otherRevenue = 0;
     const kurirCountMap: Record<string, number> = {};
     const kecCountMap: Record<string, number> = {};
+    const uniqueDays = new Set<string>();
 
     filteredRecords.forEach((r) => {
       const p = String(r.paymentType || "").toUpperCase();
@@ -615,9 +617,21 @@ export const PaxelFarmaDashboardView: React.FC = () => {
 
       kurirCountMap[r.courierName] = (kurirCountMap[r.courierName] || 0) + 1;
       kecCountMap[r.kecamatan] = (kecCountMap[r.kecamatan] || 0) + 1;
+
+      // Catat tanggal aktif untuk kalkulasi rata-rata per hari sesuai filter
+      const dKey = r.date || (r.rawTimestamp ? String(r.rawTimestamp).slice(0, 10) : "");
+      if (dKey && dKey !== "-") {
+        uniqueDays.add(dKey);
+      }
     });
 
     const totalRevenue = codRevenue + gratisRevenue + regulerRevenue + vipRevenue + otherRevenue;
+
+    // Hitung rata-rata per hari dinamis sesuai filter (dibulatkan ke atas / Math.ceil)
+    const activeDaysCount = uniqueDays.size;
+    const rawAvgPerDay = activeDaysCount > 0 ? total / activeDaysCount : 0;
+    const avgPerDay = Math.ceil(rawAvgPerDay);
+    const avgRevenuePerDay = activeDaysCount > 0 ? Math.ceil(totalRevenue / activeDaysCount) : 0;
 
     // Find top courier
     let topKurir = "-";
@@ -654,6 +668,10 @@ export const PaxelFarmaDashboardView: React.FC = () => {
       vipRevenue,
       vipShare: total > 0 ? ((vipCount / total) * 100).toFixed(1) : "0",
       totalRevenue,
+      activeDaysCount,
+      avgPerDay,
+      rawAvgPerDay,
+      avgRevenuePerDay,
       topKurir,
       topKurirCount: topKurirMax,
       topKec,
@@ -1187,25 +1205,37 @@ export const PaxelFarmaDashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Metric 5: Kurir Teraktif */}
+        {/* Metric 5: Rata-rata Per Hari */}
         <div
           className={`p-4 rounded-2xl border shadow-sm transition ${
             isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-medium">Kurir Teraktif</span>
-            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500">
-              <Truck className="w-4 h-4" />
+            <span className="font-medium">Rata-rata Per Hari</span>
+            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500">
+              <CalendarDays className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-lg font-bold tracking-tight truncate block">
-              {metrics.topKurir}
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400">
+              {metrics.avgPerDay.toLocaleString("id-ID")}
             </span>
+            <span className="text-[11px] text-slate-500">paket / hari</span>
+            {metrics.rawAvgPerDay > 0 && metrics.rawAvgPerDay !== metrics.avgPerDay && (
+              <span className="text-[10px] text-slate-400 font-mono">
+                (~{metrics.rawAvgPerDay.toFixed(1).replace(".", ",")})
+              </span>
+            )}
           </div>
-          <div className="mt-1 text-[11px] text-purple-600 dark:text-purple-400 font-medium">
-            {metrics.topKurirCount.toLocaleString("id-ID")} paket diantar
+          <div className="mt-1 text-[11px] text-slate-500 truncate">
+            {metrics.activeDaysCount > 0 ? (
+              <span>
+                Dari <strong className="text-indigo-600 dark:text-indigo-400">{metrics.activeDaysCount} hari</strong> aktif pengiriman
+              </span>
+            ) : (
+              "0 hari aktif pengiriman"
+            )}
           </div>
         </div>
 
