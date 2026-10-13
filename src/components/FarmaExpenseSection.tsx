@@ -89,6 +89,54 @@ function formatDateIndo(dateStr: string): string {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
 
+/**
+ * Menentukan bulan default pengeluaran (Opsi 2):
+ * 1. Prioritaskan bulan kalender saat ini jika ada data.
+ * 2. Jika belum ada data bulan ini, fallback ke bulan data terakhir yang tersedia.
+ */
+function resolveDefaultExpenseMonth(
+  expensesList: FarmaExpenseRecord[],
+  deliveryList: FarmaDeliveryRecord[]
+): string {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+  const currentKey = `${curYear}-${curMonth}`;
+
+  // 1. Cek apakah ada record di bulan & tahun berjalan
+  const hasCurrent =
+    expensesList.some((e) => e.year === curYear && e.month === curMonth) ||
+    deliveryList.some((d) => d.year === curYear && d.month === curMonth);
+
+  if (hasCurrent) {
+    return currentKey;
+  }
+
+  // 2. Fallback: Cari bulan terbaru yang ada datanya
+  const map = new Map<string, { key: string; year: number; month: number }>();
+  expensesList.forEach((e) => {
+    if (e.year && e.month && !isExcludedExpenseCategory(e.category)) {
+      map.set(`${e.year}-${e.month}`, { key: `${e.year}-${e.month}`, year: e.year, month: e.month });
+    }
+  });
+  deliveryList.forEach((d) => {
+    if (d.year && d.month) {
+      map.set(`${d.year}-${d.month}`, { key: `${d.year}-${d.month}`, year: d.year, month: d.month });
+    }
+  });
+
+  const sorted = Array.from(map.values()).sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.month - a.month;
+  });
+
+  if (sorted.length > 0) {
+    return sorted[0].key;
+  }
+
+  return "ALL";
+}
+
 export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
   expenses,
   deliveryRecords,
@@ -98,17 +146,15 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
 }) => {
   const { isDark } = useTheme();
 
+  // Melacak interaksi manual pengguna terhadap filter bulan
+  const hasUserSelectedMonth = React.useRef(false);
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  // Default to current month (e.g. 2026-9) if data exists
+  // Default to current month or latest available month (Opsi 2)
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    const now = new Date();
-    const currentKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
-    const hasCurrent =
-      expenses.some((e) => `${e.year}-${e.month}` === currentKey) ||
-      deliveryRecords.some((d) => `${d.year}-${d.month}` === currentKey);
-    return hasCurrent ? currentKey : "ALL";
+    return resolveDefaultExpenseMonth(expenses, deliveryRecords);
   });
   const [sortField, setSortField] = useState<"date" | "nominal">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -164,15 +210,17 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
     });
   }, [validExpenses, deliveryRecords]);
 
-  // If selectedMonth is not in available options after new data loads, fallback gracefully
+  // Jika data baru dimuat dan pengguna belum memilih bulan secara manual, sinkronkan bulan default (Opsi 2)
   React.useEffect(() => {
-    if (selectedMonth !== "ALL" && monthOptions.length > 0) {
+    if (!hasUserSelectedMonth.current && (expenses.length > 0 || deliveryRecords.length > 0)) {
+      setSelectedMonth(resolveDefaultExpenseMonth(expenses, deliveryRecords));
+    } else if (selectedMonth !== "ALL" && monthOptions.length > 0) {
       const exists = monthOptions.some((m) => m.key === selectedMonth);
       if (!exists) {
         setSelectedMonth(monthOptions[0].key);
       }
     }
-  }, [monthOptions, selectedMonth]);
+  }, [expenses, deliveryRecords, monthOptions, selectedMonth]);
 
   // Active month label
   const selectedMonthLabel = useMemo(() => {
@@ -424,6 +472,7 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
               <select
                 value={selectedMonth}
                 onChange={(e) => {
+                  hasUserSelectedMonth.current = true;
                   setSelectedMonth(e.target.value);
                   setCurrentPage(1);
                 }}
@@ -499,6 +548,7 @@ export const FarmaExpenseSection: React.FC<FarmaExpenseSectionProps> = ({
             {isFilterActive && (
               <button
                 onClick={() => {
+                  hasUserSelectedMonth.current = true;
                   setSelectedMonth("ALL");
                   setSelectedCategory("ALL");
                   setSearchQuery("");

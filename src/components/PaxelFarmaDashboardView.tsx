@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Pill,
   Search,
@@ -90,8 +90,52 @@ function formatDisplayDate(dateStr: string, rawTimestamp: string): string {
   return rawTimestamp || dateStr;
 }
 
+/**
+ * Menentukan filter bulan default (Opsi 2):
+ * 1. Prioritaskan bulan berjalan (kalender real-time).
+ * 2. Jika belum ada data sama sekali untuk bulan berjalan, fallback ke bulan data terakhir yang ada (misal: September),
+ *    sehingga saat pertama kali dibuka dashboard tidak kosong.
+ * 3. Begitu data bulan baru masuk ke spreadsheet/sinkronisasi, sistem otomatis mengarahkan ke bulan berjalan.
+ */
+function resolveDefaultMonth(dataList: FarmaDeliveryRecord[]): string {
+  if (!dataList || dataList.length === 0) return "ALL";
+  const now = new Date();
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+
+  // 1. Cek apakah ada record untuk bulan dan tahun saat ini
+  const hasCurrentMonthAndYear = dataList.some((r) => r.month === curMonth && r.year === curYear);
+  if (hasCurrentMonthAndYear) {
+    return String(curMonth);
+  }
+
+  // 2. Cek apakah ada record untuk bulan saat ini (jika tahun tidak tersimpan presisi)
+  const hasCurrentMonth = dataList.some((r) => r.month === curMonth);
+  if (hasCurrentMonth) {
+    return String(curMonth);
+  }
+
+  // 3. Fallback: Bulan terbaru yang memiliki data di spreadsheet
+  const monthsWithData = Array.from(
+    new Set(
+      dataList
+        .map((r) => r.month)
+        .filter((m): m is number => typeof m === "number" && !isNaN(m) && m >= 1 && m <= 12)
+    )
+  ).sort((a, b) => b - a);
+
+  if (monthsWithData.length > 0) {
+    return String(monthsWithData[0]);
+  }
+
+  return "ALL";
+}
+
 export const PaxelFarmaDashboardView: React.FC = () => {
   const { isDark } = useTheme();
+
+  // Melacak apakah user sudah secara manual memilih filter bulan tertentu
+  const hasUserSelectedMonth = useRef(false);
 
   // Sub-navigation tab: 'delivery' (RSUD & RSI) vs 'expense' (Sheet EXPENSE)
   const [farmaTab, setFarmaTab] = useState<"delivery" | "expense">("delivery");
@@ -104,11 +148,9 @@ export const PaxelFarmaDashboardView: React.FC = () => {
   const [faskesFilter, setFaskesFilter] = useState<"ALL" | "RSUD BANJARNEGARA" | "RSI BANJARNEGARA">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
-  // Default to current month (e.g. September) if data exists
+  // Default ke bulan berjalan atau bulan data terakhir jika bulan berjalan belum ada data (Opsi 2)
   const [monthFilter, setMonthFilter] = useState<string>(() => {
-    const curMonth = new Date().getMonth() + 1;
-    const hasCurrent = DEFAULT_FARMA_RECORDS.some((r) => r.month === curMonth);
-    return hasCurrent ? String(curMonth) : "ALL";
+    return resolveDefaultMonth(DEFAULT_FARMA_RECORDS);
   });
   const [kecamatanFilter, setKecamatanFilter] = useState<string>("ALL");
   const [courierFilter, setCourierFilter] = useState<string>("ALL");
@@ -236,6 +278,11 @@ export const PaxelFarmaDashboardView: React.FC = () => {
             setRecords(cleanData);
             const now = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
             setLastSyncedTime(now);
+
+            // Jika pengguna belum memilih filter bulan manual, otomatis terapkan bulan default data terbaru (Opsi 2)
+            if (!hasUserSelectedMonth.current) {
+              setMonthFilter(resolveDefaultMonth(cleanData));
+            }
 
             // Persist custom URL if valid
             if (customUrl) {
@@ -1004,7 +1051,10 @@ export const PaxelFarmaDashboardView: React.FC = () => {
             </div>
             {monthFilter !== "ALL" && (
               <button
-                onClick={() => setMonthFilter("ALL")}
+                onClick={() => {
+                  hasUserSelectedMonth.current = true;
+                  setMonthFilter("ALL");
+                }}
                 className="text-xs text-slate-500 hover:text-emerald-500 underline transition cursor-pointer"
               >
                 Tampilkan Semua Periode
@@ -1370,7 +1420,10 @@ export const PaxelFarmaDashboardView: React.FC = () => {
             {/* Month Filter */}
             <select
               value={monthFilter}
-              onChange={(e) => setMonthFilter(e.target.value)}
+              onChange={(e) => {
+                hasUserSelectedMonth.current = true;
+                setMonthFilter(e.target.value);
+              }}
               className={`px-3 py-2 rounded-xl text-xs font-medium border transition focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${
                 isDark
                   ? "bg-slate-800 border-slate-700 text-white"
@@ -1430,6 +1483,7 @@ export const PaxelFarmaDashboardView: React.FC = () => {
               <button
                 onClick={() => {
                   setPaymentFilter("ALL");
+                  hasUserSelectedMonth.current = true;
                   setMonthFilter("ALL");
                   setKecamatanFilter("ALL");
                   setCourierFilter("ALL");
